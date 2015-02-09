@@ -6,7 +6,7 @@ module dolina.util;
 import std.array;
 import std.bitmanip;
 import std.system; // for Endian
-
+import std.range;
 
 /// Bytes per each DM. A DM is a `ushort`.
 enum BYTES_PER_DM = 2;
@@ -43,6 +43,31 @@ ubyte[] toBytes(T)(T[] words) {
    [0x8034].toBytes!uint().shouldEqual([0x34, 0x80, 0, 0]);
    [0x010464].toBytes!uint().shouldEqual([0x64, 0x04, 1, 0]);
 }
+
+/**
+* Converts an array of bytes into DM array.
+* 
+* Params:  bytes = array to convert
+*
+* Returns: DM rapresentation
+*/
+ushort[] toDM(ubyte[] bytes) {
+   ushort[] dm;
+   while (bytes.length >= BYTES_PER_DM) {
+      dm ~= bytes.read!(ushort, Endian.littleEndian);
+   }
+   if (bytes.length > 0) {
+      dm ~= bytes[0];
+   }
+   return dm;
+} unittest {
+   import unit_threaded;
+   [0x10].toDM().shouldEqual([0x10]);
+   [0, 0xAB].toDM().shouldEqual([0xAB00]);
+   [0x20, 0x0].toDM().shouldEqual([0x20]);
+   [0x10, 0x20, 0x30, 0x40, 0x50].toDM().shouldEqual([0x2010, 0x4030, 0x50]);
+}
+
 
 /**
  * Takes an array of DM (words ushort)) and converts the first `T.sizeof / 2`
@@ -130,7 +155,7 @@ T readDM(T)(ref ushort[] words) if (T.sizeof > 1) {
 
    bBuffer.readDM!ushort.shouldEqual(1);
    bBuffer.length.shouldEqual(2);
-   
+
    bBuffer.readDM!ushort.shouldEqual(2);
    bBuffer.length.shouldEqual(1);
 
