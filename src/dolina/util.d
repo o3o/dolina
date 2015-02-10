@@ -8,11 +8,15 @@ import std.bitmanip;
 import std.system; // for Endian
 
 
-/// Bytes per each DM. A DM is a `ushort`.
+/**
+* Bytes per each DM. 
+*
+* A DM is a `ushort`, so each DM has 2 bytes
+*/
 enum BYTES_PER_DM = 2;
 
 /**
-* Converts an array into ubyte array.
+* Converts an array of DM into ubyte array.
 * 
 * Omron stores data in LittleEndian format.
 *
@@ -45,7 +49,7 @@ ubyte[] toBytes(T)(T[] words) {
 }
 
 /**
- * Takes an array of DM (words ushort)) and converts the first `T.sizeof / 2`
+ * Takes an array of DM (`ushort`) and converts the first `T.sizeof / 2`
  * DM to `T`. 
  * The array is not consumed.
  * 
@@ -66,8 +70,9 @@ T peekDM(T)(ushort[] words) {
 }
 
 /**
- * Takes an array of DM (words ushort)) and converts the first `T.sizeof / 2`
- * DM to `T`. 
+ * Takes an array of DM (`ushort`) and converts the first `T.sizeof / 2`
+ * DM to `T` starting from index `index`. 
+ *
  * The array is not consumed.
  * 
  * Params:
@@ -94,8 +99,9 @@ T peekDM(T)(ushort[] words, size_t index) {
 }
 
 /**
- * Takes an array of DM (words ushort)) and converts the first `T.sizeof / 2`
+ * Takes an array of DM (`ushort`) and converts the first `T.sizeof / 2`
  * DM to `T`. 
+ *
  * The `T.sizeof / 2` words which are read are consumed from
  * the array.
  * 
