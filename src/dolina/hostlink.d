@@ -107,6 +107,24 @@ class HostLink: IHostLink {
    }
 }
 
+class NullHostLink: IHostLink {
+   ushort[] read(const(int) address, const(int) length) {
+      return new ushort[length];
+   }
+
+   void write(const(int) address, const(ushort)[] data) { }
+
+   private int _unit;
+   @property int unit() {
+      return _unit;
+   }
+   @property void unit(int u) {
+      _unit = u;
+   }
+   @property int dataMemorySize() { return 100; }
+}
+
+
 /**
  * Get a string command to read data memory.
  *
