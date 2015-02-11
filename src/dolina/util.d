@@ -72,7 +72,6 @@ ushort[] toDM(ubyte[] bytes) {
    [0x10, 0x20, 0x30, 0x40, 0x50].toDM().shouldEqual([0x2010, 0x4030, 0x50]);
 }
 
-
 /**
  * Takes an array of DM (words ushort)) and converts the first `T.sizeof / 2`
  * DM to `T`. 
@@ -134,7 +133,7 @@ T peekDM(T)(ushort[] words, size_t index) {
  * T = The integral type to convert the first `T.sizeof / 2` words to.
  * words = The array of words to convert
  */
-T readDM(T)(ref ushort[] words) if (T.sizeof > 1) {
+T getFromDM(T)(ref ushort[] words) if (T.sizeof > 1) {
    enum NO_OF_DM = T.sizeof / BYTES_PER_DM;
 
    ushort[NO_OF_DM] dm;
@@ -149,22 +148,22 @@ T readDM(T)(ref ushort[] words) if (T.sizeof > 1) {
    import unit_threaded;
    ushort[] buffer = [0x645A, 0x3ffb];
    buffer.length.shouldEqual(2);
-   buffer.readDM!float.shouldEqual(1.964F);
+   buffer.getFromDM!float.shouldEqual(1.964F);
    buffer.length.shouldEqual(0);
 
    ushort[] shortBuffer = [0x645A];
    shortBuffer.length.shouldEqual(1);
-   shortBuffer.readDM!float().shouldThrow!Error;
+   shortBuffer.getFromDM!float().shouldThrow!Error;
 
    ushort[] bBuffer = [0x0001, 0x0002, 0x0003];
    bBuffer.length.shouldEqual(3);
 
-   bBuffer.readDM!ushort.shouldEqual(1);
+   bBuffer.getFromDM!ushort.shouldEqual(1);
    bBuffer.length.shouldEqual(2);
 
-   bBuffer.readDM!ushort.shouldEqual(2);
+   bBuffer.getFromDM!ushort.shouldEqual(2);
    bBuffer.length.shouldEqual(1);
 
-   bBuffer.readDM!ushort.shouldEqual(3);
+   bBuffer.getFromDM!ushort.shouldEqual(3);
    bBuffer.length.shouldEqual(0);
 }

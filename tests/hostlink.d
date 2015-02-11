@@ -18,7 +18,7 @@ void read_should_send_valid_string() {
 
    auto host = new HostLink(chan);
    host.unit = 2;
-   host.read(31, 2);
+   host.readDM(31, 2);
    m.verify(true // si arrabbia se non si verifica una aspettativa impostata
          , false // ignora se e' stato chiamato un metodo non atteso)
          );
@@ -35,7 +35,7 @@ void write_should_send_valid_string() {
 
    auto host = new HostLink(chan);
    host.unit = 2;
-   host.write(302, [100, 6500]);
+   host.writeDM(302, [100, 6500]);
    m.verify(true // si arrabbia se non si verifica una aspettativa impostata
          , false // ignora se e' stato chiamato un metodo non atteso)
          );
@@ -50,16 +50,18 @@ void given_big_data_Write_should_send_multiple_pack() {
    chan.write("");
    m.lastCall().ignoreArgs;
    m.lastCall().repeat(3);
+
    m.expect(chan.read()).returns("@02WD0015*");
    m.lastCall().ignoreArgs;
    m.lastCall().repeat(3);
+
    m.replay();
 
    auto host = new HostLink(chan);
    host.unit = 2;
 
    ushort[62] data = 1;
-   host.write(302, data);
+   host.writeDM(302, data);
 
    m.verify();
 

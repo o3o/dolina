@@ -20,7 +20,7 @@ interface IHostLink {
     * address = Beginning word address
     * length = Number of words
     */
-   ushort[] read(const(int) address, const(int) length);
+   ushort[] readDM(const(int) address, const(int) length);
 
    /**
     * Writes data to the DM area, starting from the specified word.
@@ -29,7 +29,7 @@ interface IHostLink {
     * address = Beginning word address
     * data = Words to write
     */
-   void write(const(int) address, const(ushort)[] data);
+   void writeDM(const(int) address, const(ushort)[] data);
 
    /**
     * Unit number.
@@ -70,31 +70,34 @@ class HostLink: IHostLink {
    }
 
    private enum MAX_FRAME_SIZE = 29;
-   ushort[] read(const(int) address, const(int) length) {
-      if (length > MAX_FRAME_SIZE) {
-         return read(address, MAX_FRAME_SIZE) ~ read(address + MAX_FRAME_SIZE, length - MAX_FRAME_SIZE);
-      } else if (length <= 0) {
-         return null;
-      } else {
-         string w = getRDString(_unit, address, length);
-         channel.write(w);
-
-         string r = channel.read();
-         string reply = crop(r);
-
-         int err = getErrorCodeFromReply(reply);
-         if (err > 0) { 
-            throw new OmronException(err);
+   ushort[] readDM(const(int) address, const(int) length) 
+      in {
+         assert(address >= 0, "negative address");
+      } body {
+         if (length > MAX_FRAME_SIZE) {
+            return readDM(address, MAX_FRAME_SIZE) ~ readDM(address + MAX_FRAME_SIZE, length - MAX_FRAME_SIZE);
+         } else if (length <= 0) {
+            return null;
          } else {
-            return toDM(reply[6 .. $ - 2]);
+            string w = getRDString(_unit, address, length);
+            channel.write(w);
+
+            string r = channel.read();
+            string reply = crop(r);
+
+            int err = getErrorCodeFromReply(reply);
+            if (err > 0) { 
+               throw new OmronException(err);
+            } else {
+               return toDM(reply[6 .. $ - 2]);
+            }
          }
       }
-   }
 
-   void write(const(int) address, const(ushort)[] data) {
+   void writeDM(const(int) address, const(ushort)[] data) {
       if (data.length > MAX_FRAME_SIZE) {
-         write(address, data[0 .. MAX_FRAME_SIZE]);
-         write(address + MAX_FRAME_SIZE, data[MAX_FRAME_SIZE .. $]);
+         writeDM(address, data[0 .. MAX_FRAME_SIZE]);
+         writeDM(address + MAX_FRAME_SIZE, data[MAX_FRAME_SIZE .. $]);
       } else {
          channel.write(getWDString(_unit, address, data));
          string reply = crop(channel.read());
@@ -108,11 +111,11 @@ class HostLink: IHostLink {
 }
 
 class NullHostLink: IHostLink {
-   ushort[] read(const(int) address, const(int) length) {
+   ushort[] readDM(const(int) address, const(int) length) {
       return new ushort[length];
    }
 
-   void write(const(int) address, const(ushort)[] data) { }
+   void writeDM(const(int) address, const(ushort)[] data) { }
 
    private int _unit;
    @property int unit() {
@@ -123,7 +126,6 @@ class NullHostLink: IHostLink {
    }
    @property int dataMemorySize() { return 100; }
 }
-
 
 /**
  * Get a string command to read data memory.
