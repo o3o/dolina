@@ -16,7 +16,7 @@ import std.range;
 enum BYTES_PER_DM = 2;
 
 /**
-* Converts an array of DM into ubyte array.
+* Converts an array of type T into ubyte array.
 * 
 * Omron stores data in LittleEndian format.
 *
@@ -167,3 +167,37 @@ T getFromDM(T)(ref ushort[] words) if (T.sizeof > 1) {
    bBuffer.getFromDM!ushort.shouldEqual(3);
    bBuffer.length.shouldEqual(0);
 }
+
+struct DMAppender {
+   private Appender!(const(ubyte)[]) buffer = appender!(const(ubyte)[])();
+   void append(T)(T value) {
+      buffer.append!(T, Endian.littleEndian)(value);
+   }
+
+   @property ushort[] DM() {
+      return buffer.data.toDM();
+   }
+} unittest {
+   import unit_threaded;
+   auto b = DMAppender();
+   b.append!ushort(5);
+   b.DM.shouldEqual([5]);
+   b.append!float(1.964F);
+   b.DM.shouldEqual([5, 0x645A, 0x3ffb]);
+   b.append!ubyte(6);
+   b.DM.shouldEqual([5, 0x645A, 0x3ffb, 6]);
+   b.append!ubyte(7);
+   b.DM.shouldEqual([5, 0x645A, 0x3ffb, 0x706]);
+
+   b.append!uint(0x1720_8034);
+   b.DM.shouldEqual([5, 0x645A, 0x3ffb, 0x706, 0x8034, 0x1720]);
+}
+
+/*
+unittest {
+   import unit_threaded;
+   auto b = DMAppender();
+   b.append!string("a");
+   b.DM.shouldEqual([0x61]);
+}
+*/
