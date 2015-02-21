@@ -168,36 +168,60 @@ T getFromDM(T)(ref ushort[] words) if (T.sizeof > 1) {
    bBuffer.length.shouldEqual(0);
 }
 
-struct DMAppender {
-   private Appender!(const(ubyte)[]) buffer = appender!(const(ubyte)[])();
-   void append(T)(T value) {
-      buffer.append!(T, Endian.littleEndian)(value);
-   }
-
-   @property ushort[] DM() {
-      return buffer.data.toDM();
+ushort toBCD(ushort dec) {
+   enum ushort MAX_VALUE = 9999;
+   enum ushort MIN_VALUE = 0;
+   if ((dec > MAX_VALUE) || (dec < MIN_VALUE)) {
+      throw new Exception("Decimal out of range (should be 0..9999)");
+   } else {
+      ushort bcd = 0;
+      enum ushort NUM_BASE = 10;
+      ushort i = 0;
+      for(; dec > 0; dec /= NUM_BASE) {
+         ushort rem = cast(ushort)(dec % NUM_BASE);
+         bcd += cast(ushort)(rem << 4 * i++);
+      }
+      return bcd;
    }
 } unittest {
    import unit_threaded;
-   auto b = DMAppender();
-   b.append!ushort(5);
-   b.DM.shouldEqual([5]);
-   b.append!float(1.964F);
-   b.DM.shouldEqual([5, 0x645A, 0x3ffb]);
-   b.append!ubyte(6);
-   b.DM.shouldEqual([5, 0x645A, 0x3ffb, 6]);
-   b.append!ubyte(7);
-   b.DM.shouldEqual([5, 0x645A, 0x3ffb, 0x706]);
-
-   b.append!uint(0x1720_8034);
-   b.DM.shouldEqual([5, 0x645A, 0x3ffb, 0x706, 0x8034, 0x1720]);
+   0.toBCD().shouldEqual(0);
+   10.toBCD().shouldEqual(0x10);
+   34.toBCD().shouldEqual(52);
+   127.toBCD().shouldEqual(0x127);
+   110.toBCD().shouldEqual(0x110);
+   9999.toBCD().shouldEqual(0x9999);
+   9999.toBCD().shouldEqual(39321);
 }
 
-/*
-unittest {
+ushort fromBCD(ushort bcd) {
+   enum int NO_OF_DIGITS = 8;
+   enum ushort MAX_VALUE = 0x9999;
+   enum ushort MIN_VALUE = 0;
+   if ((bcd > MAX_VALUE) || (bcd < MIN_VALUE)) {
+      throw new Exception("BCD out of range (should be 0..39321)");
+   } else {
+      ushort dec = 0;
+      ushort weight = 1;
+      for (int j = 0; j < NO_OF_DIGITS; j++) {
+         dec += cast(ushort)((bcd & 0x0F) * weight);
+         bcd = cast(ushort)(bcd >> 4);
+         weight *= 10;
+      } 
+      return dec;
+   }
+} unittest {
    import unit_threaded;
-   auto b = DMAppender();
-   b.append!string("a");
-   b.DM.shouldEqual([0x61]);
+   0.fromBCD().shouldEqual(0);
+
+   (0x22).fromBCD().shouldEqual(22);
+   (34).fromBCD().shouldEqual(22);
+   // 17bcd
+   (0b0001_0111).fromBCD().shouldEqual(17);
+   295.fromBCD().shouldEqual(127);
+   39321.fromBCD().shouldEqual(9999);
+   (0x9999).fromBCD().shouldEqual(9999);
 }
-*/
+
+
+

@@ -6,6 +6,7 @@ int main(string[] args) {
     return args.runTests!(
           "tests.hostlink", 
           "dolina.hostlink",
-          "dolina.util"
+          "dolina.util",
+          "dolina.dmrange"
           );
 }
