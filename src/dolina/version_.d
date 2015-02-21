@@ -1,2 +1,2 @@
 module dolina.version_;
-enum VERSION = "0.2.0";
+enum VERSION = "0.3.0";
