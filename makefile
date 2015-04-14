@@ -1,5 +1,5 @@
 NAME = libdolina.a
-VERSION = 0.4.0
+VERSION = 0.5.0
 
 ROOT_SOURCE_DIR = src
 SRC = $(getSources)
