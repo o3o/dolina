@@ -5,7 +5,7 @@
    "authors":["Orfeo Da Viá"],
 	"license": "LGPL v3.0.0",
    "dependencies": {
-      "serial-port": ">=1.1.0"
+      "serial-port": "~>1.1.0"
    },
    "configurations": [
         {
@@ -15,8 +15,12 @@
         {
             "name": "unittest",
             "targetType": "executable",
+            "targetName": "test-runner",
+            "sourcePaths": ["tests", "src"],
+            "mainSourceFile": "tests/app.d",
+            "excludedSourceFiles": ["src/app.d"],
             "dependencies": {
-               "unit-threaded": ">=0.4.3",
+               "unit-threaded": "~>0.4.7",
                "dmocks-revived": "~master"
             }
         }

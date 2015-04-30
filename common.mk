@@ -4,7 +4,7 @@
 DEFAULT: all
 BIN = bin
 DC = dmd
-NAME_TEST = test
+NAME_TEST = test-runner
 NAME_DEBUG = $(NAME)d
 NAME_REL = $(NAME)
 

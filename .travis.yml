@@ -1,4 +1,1 @@
 language: d
-
-script:
- - make test

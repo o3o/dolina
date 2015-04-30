@@ -1,4 +1,5 @@
 # dolina
+[![Build Status](https://travis-ci.org/o3o/dolina.svg?branch=master)](https://travis-ci.org/o3o/dolina)
 D implementation of HostLink, a communication protocol for use with PLC's made by Omron.
 
 ## Libraries
