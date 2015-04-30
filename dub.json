@@ -1,28 +1,30 @@
 {
    "name": "dolina",
    "description": "Omron HostLink PLC communication library",
-   "targetPath": "bin",
+   "license": "LGPL v3.0.0",
+   "copyright": "Copyright © 2014, Orfeo Da Viá",
    "authors":["Orfeo Da Viá"],
-	"license": "LGPL v3.0.0",
+   "targetPath": "bin",
+   "targetType": "library",
    "dependencies": {
       "serial-port": "~>1.1.0"
    },
    "configurations": [
-        {
-            "name": "library",
-            "targetType": "library"
-        },
-        {
-            "name": "unittest",
-            "targetType": "executable",
-            "targetName": "test-runner",
-            "sourcePaths": ["tests", "src"],
-            "mainSourceFile": "tests/app.d",
-            "excludedSourceFiles": ["src/app.d"],
-            "dependencies": {
-               "unit-threaded": "~>0.4.7",
-               "dmocks-revived": "~master"
-            }
-        }
+      {
+         "name": "library",
+         "targetType": "library"
+      },
+      {
+         "name": "unittest",
+         "targetType": "executable",
+         "targetName": "test-runner",
+         "sourcePaths": ["tests", "src"],
+         "mainSourceFile": "tests/app.d",
+         "excludedSourceFiles": ["src/app.d"],
+         "dependencies": {
+            "unit-threaded": "~>0.4.7",
+            "dmocks-revived": "~master"
+         }
+      }
    ]
 }
