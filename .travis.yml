@@ -1,9 +1,4 @@
 language: d
-d:
- - dmd-2.067
 
 script:
  - make test
-
-after_success:
- - bash <(curl -s https://codecov.io/bash)
