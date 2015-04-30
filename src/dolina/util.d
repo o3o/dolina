@@ -26,16 +26,16 @@ enum BYTES_PER_DM = 2;
 *  assert(buf.toBytes!ushort() == [0x34, 0x80, 0x10, 0x20]);
 * --------------------
 *
-* Params:  words = array to convert
+* Params:  input = array to convert
 *
 * Returns: bytes rapresentation
 */
-ubyte[] toBytes(T)(T[] words) {
+ubyte[] toBytes(T)(T[] input) {
    auto buffer = appender!(const(ubyte)[])();
-   foreach (dm; words) {
+   foreach (dm; input) {
       buffer.append!(T, Endian.littleEndian)(dm);
    }
-   return buffer.data;
+   return buffer.data.dup;
 } unittest {
    import unit_threaded;
    [0x8034].toBytes!ushort().shouldEqual([0x34, 0x80]);
@@ -49,7 +49,7 @@ ubyte[] toBytes(T)(T[] words) {
 }
 
 /**
-* Converts an array of bytes into DM array.
+* Converts an array of bytes into DM (ushort) array.
 * 
 * Params:  bytes = array to convert
 *
@@ -73,9 +73,9 @@ ushort[] toDM(ubyte[] bytes) {
 }
 
 /**
- * Takes an array of DM (words ushort)) and converts the first `T.sizeof / 2`
+ * Takes an array of DM (ushort) and converts the first `T.sizeof / 2`
  * DM to `T`. 
- * The array is not consumed.
+ * The array is *not* consumed.
  * 
  * Params:
  * T = The integral type to convert the first `T.sizeof / 2` words to.
@@ -97,7 +97,7 @@ T peekDM(T)(ushort[] words) {
  * Takes an array of DM (`ushort`) and converts the first `T.sizeof / 2`
  * DM to `T` starting from index `index`. 
  *
- * The array is not consumed.
+ * The array is *not* consumed.
  * 
  * Params:
  * T = The integral type to convert the first `T.sizeof / 2` words to.
@@ -123,51 +123,12 @@ T peekDM(T)(ushort[] words, size_t index) {
 }
 
 /**
- * Takes an array of DM (`ushort`) and converts the first `T.sizeof / 2`
- * DM to `T`. 
- *
- * The `T.sizeof / 2` words which are read are consumed from
- * the array.
- * 
- * Params:
- * T = The integral type to convert the first `T.sizeof / 2` words to.
- * words = The array of words to convert
- */
-T getFromDM(T)(ref ushort[] words) if (T.sizeof > 1) {
-   enum NO_OF_DM = T.sizeof / BYTES_PER_DM;
-
-   ushort[NO_OF_DM] dm;
-   foreach(ref e; dm) {
-      e = words.front;
-      words.popFront();
-   }
-
-   const ubyte[T.sizeof] bytes = dm.toBytes();
-   return littleEndianToNative!T(bytes);
-} unittest {
-   import unit_threaded;
-   ushort[] buffer = [0x645A, 0x3ffb];
-   buffer.length.shouldEqual(2);
-   buffer.getFromDM!float.shouldEqual(1.964F);
-   buffer.length.shouldEqual(0);
-
-   ushort[] shortBuffer = [0x645A];
-   shortBuffer.length.shouldEqual(1);
-   shortBuffer.getFromDM!float().shouldThrow!Error;
-
-   ushort[] bBuffer = [0x0001, 0x0002, 0x0003];
-   bBuffer.length.shouldEqual(3);
-
-   bBuffer.getFromDM!ushort.shouldEqual(1);
-   bBuffer.length.shouldEqual(2);
-
-   bBuffer.getFromDM!ushort.shouldEqual(2);
-   bBuffer.length.shouldEqual(1);
-
-   bBuffer.getFromDM!ushort.shouldEqual(3);
-   bBuffer.length.shouldEqual(0);
-}
-
+* Converts ushort value into BDC format
+*
+* Params:  dec = ushort in decimal format
+*
+* Returns: BCD value
+*/
 ushort toBCD(ushort dec) {
    enum ushort MAX_VALUE = 9999;
    enum ushort MIN_VALUE = 0;
@@ -194,6 +155,13 @@ ushort toBCD(ushort dec) {
    9999.toBCD().shouldEqual(39321);
 }
 
+/**
+* Converts BCD value into decimal format
+*
+* Params:  dec = ushort in BCD format
+*
+* Returns: decimal value
+*/
 ushort fromBCD(ushort bcd) {
    enum int NO_OF_DIGITS = 8;
    enum ushort MAX_VALUE = 0x9999;

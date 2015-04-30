@@ -5,7 +5,21 @@ import std.traits; // signed
 import std.stdio;
 import std.array;
 
-public T pop(T, R)(ref R input) if ((isInputRange!R)
+/**
+ * Takes an input range of DM (ushort) and converts the first `T.sizeof / 2`
+ * DM to `T`. 
+ * The array is consumed.
+ * 
+ * Params:
+ * T = The integral type to convert the first `T.sizeof / 2` DM to.
+ * words = The input range of DM to convert
+ *
+ * Examples:
+ * --------------------
+ * assert([0x645A, 0x3ffb].pop!float() == 1.964F);
+ * --------------------
+ */
+T pop(T, R)(ref R input) if ((isInputRange!R)
       && is(ElementType!R : const ushort)) {
    static if(isIntegral!T) {
       return popInteger!(R, T.sizeof / 2, isSigned!T)(input);
@@ -20,7 +34,9 @@ public T pop(T, R)(ref R input) if ((isInputRange!R)
    import unit_threaded;
 
    ushort[] input = [0x1eb8, 0xc19d];
+   input.length.shouldEqual(2);
    pop!float(input).shouldEqual(-19.64F);
+   input.length.shouldEqual(0);
 
    input = [0x0, 0xBF00, 0x0, 0x3F00];
    pop!float(input).shouldEqual(-0.5F);
@@ -32,8 +48,11 @@ public T pop(T, R)(ref R input) if ((isInputRange!R)
    pop!double(input).shouldEqual(-0.5);
 
    input = [0x00, 0x01, 0x02, 0x03];
+   input.length.shouldEqual(4);
    pop!int(input).shouldEqual(0x10000);
+   input.length.shouldEqual(2);
    pop!int(input).shouldEqual(0x30002);
+   input.length.shouldEqual(0);
 
    input = [0xFFFF, 0xFFFF, 0xFFFB, 0xFFFB];
    pop!ushort(input).shouldEqual(0xFFFF);
@@ -68,6 +87,24 @@ public T pop(T, R)(ref R input) if ((isInputRange!R)
    pop!short(input).shouldEqual(-1);
    pop!ushort(input).shouldEqual(0xFFFB);
    pop!short(input).shouldEqual(-5);
+} unittest {
+   import unit_threaded;
+
+   ushort[] shortBuffer = [0x645A];
+   shortBuffer.length.shouldEqual(1);
+   shortBuffer.pop!float().shouldThrow!Exception;
+
+   ushort[] bBuffer = [0x0001, 0x0002, 0x0003];
+   bBuffer.length.shouldEqual(3);
+
+   bBuffer.pop!ushort.shouldEqual(1);
+   bBuffer.length.shouldEqual(2);
+
+   bBuffer.pop!ushort.shouldEqual(2);
+   bBuffer.length.shouldEqual(1);
+
+   bBuffer.pop!ushort.shouldEqual(3);
+   bBuffer.length.shouldEqual(0);
 }
 
 private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInputRange!R) 
@@ -147,6 +184,7 @@ void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
    auto app = appender(arr);
    write!float(app, 1.0f);
    write!double(app, 2.0);
+
    ushort[] expected = [
       0, 0x3f80, 
       0, 0, 0, 0x4000];
@@ -155,14 +193,13 @@ void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
    import std.array;
    import unit_threaded;
 
-   //ushort[] arr;
-   //auto app = appender(arr);
    auto app = appender!(const(ushort)[]);
    app.write!ushort(5);
-  
    app.data.shouldEqual([5]);
+
    app.write!float(1.964F);
    app.data.shouldEqual([5, 0x645A, 0x3ffb]);
+
    app.write!uint(0x1720_8034);
    app.data.shouldEqual([5, 0x645A, 0x3ffb, 0x8034, 0x1720]);
 }
@@ -209,6 +246,7 @@ private uint float2uint(float x) pure nothrow {
    float2uint(0.000001F).shouldEqual(0x358637bd);
    float2uint(-0.000001F).shouldEqual(0xb58637bd);
 }
+
 // read/write 64-bits float
 union float_uint {
    float f;
