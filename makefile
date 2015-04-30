@@ -15,6 +15,10 @@ DCFLAGS += -debug #compile in debug code
 #DCFLAGS += -w # warnings as errors (compilation will halt)
 DCFLAGS += -wi # warnings as messages (compilation will continue)
 
+# release flags
+DCFLAGS_REL = -O -wi -release -inline -boundscheck=off
+
+DCFLAGS_TEST += $(DCFLAGS)
 DCFLAGS_TEST += -unittest
 # DCFLAGS_TEST += -main -quiet
 

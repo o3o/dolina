@@ -222,6 +222,3 @@ ushort fromBCD(ushort bcd) {
    39321.fromBCD().shouldEqual(9999);
    (0x9999).fromBCD().shouldEqual(9999);
 }
-
-
-

@@ -18,6 +18,7 @@ public T pop(T, R)(ref R input) if ((isInputRange!R)
    }
 } unittest {
    import unit_threaded;
+
    ushort[] input = [0x1eb8, 0xc19d];
    pop!float(input).shouldEqual(-19.64F);
 
@@ -43,9 +44,9 @@ public T pop(T, R)(ref R input) if ((isInputRange!R)
 
    ushort[] asPeek = [0x645A, 0x3ffb];
    asPeek.pop!float.shouldEqual(1.964F);
-
 } unittest {
    import unit_threaded;
+
    ushort[] input = [0x1eb8, 0xc19d
       , 0x0, 0xBF00, 0x0, 0x3F00
       , 0x0, 0x0, 0x0, 0x3FE0
@@ -85,6 +86,7 @@ private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInput
    }
 } unittest {
    import unit_threaded;
+
    ushort[] input = [0x00, 0x01, 0x02, 0x03];
    popInteger!(ushort[], 2, false)(input).shouldEqual(0x10000);
    popInteger!(ushort[], 2, false)(input).shouldEqual(0x30002);

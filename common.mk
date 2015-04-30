@@ -4,11 +4,14 @@
 DEFAULT: all
 BIN = bin
 DC = dmd
-BASE_NAME = $(basename $(NAME))
 NAME_TEST = test
+NAME_DEBUG = $(NAME)d
+NAME_REL = $(NAME)
+
 DSCAN = $(D_DIR)/Dscanner/bin/dscanner
 MKDIR = mkdir -p
 RM = -rm -f
+UPX = upx --no-progress
 
 BITS ?= $(shell getconf LONG_BIT)
 DCFLAGS += -m$(BITS)
@@ -20,18 +23,23 @@ getSources = $(shell find $(ROOT_SOURCE_DIR) -name "*.d")
 # -----------
 VERSION_FLAG += $(if $(VERS), -version=$(VERS), )
 
-.PHONY: all clean clobber test testv run pkg pkgsrc tags syn style loc var ver help
+.PHONY: all clean clobber test testv run pkg pkgsrc tags syn style loc var ver help release
 
-all: builddir $(BIN)/$(NAME)
+all: builddir $(BIN)/$(NAME_DEBUG)
+release: builddir $(BIN)/$(NAME_REL)
 
 builddir:
 	@$(MKDIR) $(BIN)
 
-$(BIN)/$(NAME): $(SRC) $(LIB)| builddir
+$(BIN)/$(NAME_DEBUG): $(SRC) $(LIB)| builddir
 	$(DC) $^ $(DCFLAGS) $(DCFLAGS_IMPORT) $(DCFLAGS_LINK) $(VERSION_FLAG) -of$@
 
+$(BIN)/$(NAME_REL): $(SRC) $(LIB)| builddir
+	$(DC) $^ $(DCFLAGS_REL) $(DCFLAGS_IMPORT) $(DCFLAGS_LINK) $(VERSION_FLAG) -of$@
+	$(UPX) $@
+
 run: all
-	$(BIN)/$(NAME)
+	$(BIN)/$(NAME_DEBUG)
 
 ## with unit_threaded:
 ## make test T=test_name
@@ -50,11 +58,11 @@ pkgdir:
 	$(MKDIR) pkg
 
 pkg: $(PKG) | pkgdir
-	tar -jcf pkg/$(BASE_NAME)-$(VERSION).tar.bz2 $^
-	zip pkg/$(BASE_NAME)-$(VERSION).zip $^
+	tar -jcf pkg/$(NAME)-$(VERSION).tar.bz2 $^
+	zip pkg/$(NAME)-$(VERSION).zip $^
 
 pkgsrc: $(PKG_SRC) | pkgdir
-	tar -jcf pkg/$(BASE_NAME)-$(VERSION)-src.tar.bz2 $^
+	tar -jcf pkg/$(NAME)-$(VERSION)-src.tar.bz2 $^
 
 tags: $(SRC)
 	$(DSCAN) --ctags $^ > tags
@@ -70,15 +78,24 @@ loc: $(SRC)
 
 clean:
 	$(RM) $(BIN)/*.o
+	$(RM) $(BIN)/*.log
 	$(RM) $(BIN)/__*
+	$(RM) $(BIN)/$(NAME_TEST)
 
-clobber:
-	$(RM) -f $(BIN)/*
+clobber: clean
+	$(RM) $(BIN)/$(NAME_REL)
+	$(RM) $(BIN)/$(NAME_DEBUG)
 
 ver:
 	@echo $(VERSION)
 
 var:
+	@echo
+	@echo NAME:       $(NAME)
+	@echo NAME_TEST:  $(NAME_TEST)
+	@echo NAME_DEBUG: $(NAME_REL)
+	@echo NAME_REL:   $(NAME_REL)
+	@echo
 	@echo D_DIR:$(D_DIR)
 	@echo SRC:$(SRC)
 	@echo DCFLAGS_IMPORT: $(DCFLAGS_IMPORT)
@@ -95,7 +112,6 @@ var:
 	@echo
 	@echo T: $(T)
 
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -105,10 +121,11 @@ help:
 	@echo "... run"
 	@echo "... clean"
 	@echo "... clobber"
-	@echo "... pkg"
-	@echo "... pkgsrc"
+	@echo "... pkg Generates a binary package"
+	@echo "... pkgsrc Generates a source package"
 	@echo "... tags Generates tag file"
-	@echo "... style Che"
+	@echo "... style Checks programming style"
 	@echo "... syn"
+	@echo "... upx Compress using upx"
 	@echo "... loc Counts lines of code"
 	@echo "... var Lists all variables"
