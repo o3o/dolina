@@ -5,13 +5,13 @@ PROJECT_VERSION = 0.5.0
 ROOT_SOURCE_DIR = src
 BIN=bin
 SRC = $(getSources)
-TARGET = "lib"
+TARGET = lib
 SRC_TEST = $(filter-out $(ROOT_SOURCE_DIR)/app.d, $(SRC))
 SRC_TEST += $(wildcard tests/*.d)
 
 # Compiler flag
 # -----------
-ifeq ($(TARGET), "lib")
+ifeq ($(TARGET),lib)
 	DCFLAGS += -lib
 	DCFLAGS_REL += -lib
 endif

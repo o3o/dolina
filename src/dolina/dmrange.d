@@ -7,12 +7,12 @@ import std.array;
 
 /**
  * Takes an input range of DM (ushort) and converts the first `T.sizeof / 2`
- * DM to `T`. 
+ * DM to `T`.
  * The array is consumed.
- * 
+ *
  * Params:
  * T = The integral type to convert the first `T.sizeof / 2` DM to.
- * words = The input range of DM to convert
+ * input = The input range of DM to convert
  *
  * Examples:
  * --------------------
@@ -107,7 +107,7 @@ T pop(T, R)(ref R input) if ((isInputRange!R)
    bBuffer.length.shouldEqual(0);
 }
 
-private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInputRange!R) 
+private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInputRange!R)
       && is(ElementType!R : const ushort)) {
    alias T = IntegerLargerThan!(numDM);
    T result = 0;
@@ -167,6 +167,26 @@ private ushort popDM(R)(ref R input) if ((isInputRange!R) && is(ElementType!R : 
    return d;
 }
 
+/**
+ * Writes type `T` into a output range of `ushort`
+ *
+ *
+ * Params:
+ * n = The integral type to write into output range
+ * output = The output range of DM to convert
+ *
+ * Examples:
+ * --------------------
+ * ushort[] arr;
+ * auto app = appender(arr);
+ * write!float(app, 1.0f);
+ *
+ *
+ * auto app = appender!(const(ushort)[]);
+ * app.write!ushort(5);
+ * app.data.shouldEqual([5]);
+ * --------------------
+ */
 void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
    static if (isIntegral!T) {
       writeInteger!(R, T.sizeof / 2)(output, n);
@@ -186,7 +206,7 @@ void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
    write!double(app, 2.0);
 
    ushort[] expected = [
-      0, 0x3f80, 
+      0, 0x3f80,
       0, 0, 0, 0x4000];
    app.data.shouldEqual(expected);
 } unittest {

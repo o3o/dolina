@@ -1,6 +1,6 @@
 /**
-* Utility functions to convert DM
-*/
+ * Utility functions to convert DM
+ */
 module dolina.util;
 
 import std.array;
@@ -9,27 +9,27 @@ import std.system; // for Endian
 import std.range;
 
 /**
-* Bytes per each DM. 
-*
-* A DM is a `ushort`, so each DM has 2 bytes
-*/
+ * Bytes per each DM.
+ *
+ * A DM is a `ushort`, so each DM has 2 bytes
+ */
 enum BYTES_PER_DM = 2;
 
 /**
-* Converts an array of type T into ubyte array.
-* 
-* Omron stores data in LittleEndian format.
-*
-* Examples:
-* --------------------
-*  ushort[] buf = [0x8034, 0x2010];
-*  assert(buf.toBytes!ushort() == [0x34, 0x80, 0x10, 0x20]);
-* --------------------
-*
-* Params:  input = array to convert
-*
-* Returns: bytes rapresentation
-*/
+ * Converts an array of type T into ubyte array.
+ *
+ * Omron stores data in LittleEndian format.
+ *
+ * Examples:
+ * --------------------
+ *  ushort[] buf = [0x8034, 0x2010];
+ *  assert(buf.toBytes!ushort() == [0x34, 0x80, 0x10, 0x20]);
+ * --------------------
+ *
+ * Params:  input = array to convert
+ *
+ * Returns: bytes rapresentation
+ */
 ubyte[] toBytes(T)(T[] input) {
    auto buffer = appender!(const(ubyte)[])();
    foreach (dm; input) {
@@ -49,12 +49,12 @@ ubyte[] toBytes(T)(T[] input) {
 }
 
 /**
-* Converts an array of bytes into DM (ushort) array.
-* 
-* Params:  bytes = array to convert
-*
-* Returns: DM rapresentation
-*/
+ * Converts an array of bytes into DM (ushort) array.
+ *
+ * Params:  bytes = array to convert
+ *
+ * Returns: DM rapresentation
+ */
 ushort[] toDM(ubyte[] bytes) {
    ushort[] dm;
    while (bytes.length >= BYTES_PER_DM) {
@@ -74,9 +74,9 @@ ushort[] toDM(ubyte[] bytes) {
 
 /**
  * Takes an array of DM (ushort) and converts the first `T.sizeof / 2`
- * DM to `T`. 
+ * DM to `T`.
  * The array is *not* consumed.
- * 
+ *
  * Params:
  * T = The integral type to convert the first `T.sizeof / 2` words to.
  * words = The array of DM to convert
@@ -95,10 +95,10 @@ T peekDM(T)(ushort[] words) {
 
 /**
  * Takes an array of DM (`ushort`) and converts the first `T.sizeof / 2`
- * DM to `T` starting from index `index`. 
+ * DM to `T` starting from index `index`.
  *
  * The array is *not* consumed.
- * 
+ *
  * Params:
  * T = The integral type to convert the first `T.sizeof / 2` words to.
  * words = The array of DM to convert
@@ -123,12 +123,12 @@ T peekDM(T)(ushort[] words, size_t index) {
 }
 
 /**
-* Converts ushort value into BDC format
-*
-* Params:  dec = ushort in decimal format
-*
-* Returns: BCD value
-*/
+ * Converts ushort value into BDC format
+ *
+ * Params:  dec = ushort in decimal format
+ *
+ * Returns: BCD value
+ */
 ushort toBCD(ushort dec) {
    enum ushort MAX_VALUE = 9999;
    enum ushort MIN_VALUE = 0;
@@ -156,12 +156,12 @@ ushort toBCD(ushort dec) {
 }
 
 /**
-* Converts BCD value into decimal format
-*
-* Params:  dec = ushort in BCD format
-*
-* Returns: decimal value
-*/
+ * Converts BCD value into decimal format
+ *
+ * Params:  dec = ushort in BCD format
+ *
+ * Returns: decimal value
+ */
 ushort fromBCD(ushort bcd) {
    enum int NO_OF_DIGITS = 8;
    enum ushort MAX_VALUE = 0x9999;
@@ -175,7 +175,7 @@ ushort fromBCD(ushort bcd) {
          dec += cast(ushort)((bcd & 0x0F) * weight);
          bcd = cast(ushort)(bcd >> 4);
          weight *= 10;
-      } 
+      }
       return dec;
    }
 } unittest {
