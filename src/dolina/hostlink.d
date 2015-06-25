@@ -13,10 +13,10 @@ import dolina.channel;
  */
 interface IHostLink {
    /**
-    * Reads the contents of specified DM words, starting from the specified 
+    * Reads the contents of specified DM words, starting from the specified
     * word.
     *
-    * Params:  
+    * Params:
     * address = Beginning word address
     * length = Number of words
     */
@@ -25,9 +25,17 @@ interface IHostLink {
    /**
     * Writes data to the DM area, starting from the specified word.
     *
-    * Params:  
+    * Params:
     * address = Beginning word address
     * data = Words to write
+    *
+    * Examples:
+    * --------------------
+    * auto buffer = appender!(const(ushort)[]);
+    * buffer.write!float(12.68);
+    * buffer.write!ushort(5);
+    * plc.writeDM(address, buffer.data);
+    * --------------------
     */
    void writeDM(const(int) address, const(ushort)[] data);
 
@@ -61,7 +69,7 @@ class HostLink: IHostLink {
 
    private int _unit = 0;
    @property int unit() {
-      return _unit; 
+      return _unit;
    }
 
    @property void unit(int u) {
@@ -70,9 +78,10 @@ class HostLink: IHostLink {
    }
 
    private enum MAX_FRAME_SIZE = 29;
-   ushort[] readDM(const(int) address, const(int) length) 
+   ushort[] readDM(const(int) address, const(int) length)
       in {
          assert(address >= 0, "negative address");
+         assert(length >= 0, "negative lenght");
       } body {
          if (length > MAX_FRAME_SIZE) {
             return readDM(address, MAX_FRAME_SIZE) ~ readDM(address + MAX_FRAME_SIZE, length - MAX_FRAME_SIZE);
@@ -86,7 +95,7 @@ class HostLink: IHostLink {
             string reply = crop(r);
 
             int err = getErrorCodeFromReply(reply);
-            if (err > 0) { 
+            if (err > 0) {
                throw new OmronException(err);
             } else {
                return toDM(reply[6 .. $ - 2]);
@@ -94,20 +103,23 @@ class HostLink: IHostLink {
          }
       }
 
-   void writeDM(const(int) address, const(ushort)[] data) {
-      if (data.length > MAX_FRAME_SIZE) {
-         writeDM(address, data[0 .. MAX_FRAME_SIZE]);
-         writeDM(address + MAX_FRAME_SIZE, data[MAX_FRAME_SIZE .. $]);
-      } else {
-         channel.write(getWDString(_unit, address, data));
-         string reply = crop(channel.read());
+   void writeDM(const(int) address, const(ushort)[] data)
+      in {
+         assert(address >= 0, "negative address");
+      } body {
+         if (data.length > MAX_FRAME_SIZE) {
+            writeDM(address, data[0 .. MAX_FRAME_SIZE]);
+            writeDM(address + MAX_FRAME_SIZE, data[MAX_FRAME_SIZE .. $]);
+         } else {
+            channel.write(getWDString(_unit, address, data));
+            string reply = crop(channel.read());
 
-         int err = getErrorCodeFromReply(reply);
-         if (err > 0) { 
-            throw new OmronException(err);
+            int err = getErrorCodeFromReply(reply);
+            if (err > 0) {
+               throw new OmronException(err);
+            }
          }
       }
-   }
 }
 
 class NullHostLink: IHostLink {
@@ -124,10 +136,11 @@ class NullHostLink: IHostLink {
    @property void unit(int u) {
       _unit = u;
    }
+
    @property int dataMemorySize() { return 100; }
 }
 
-/**
+/*
  * Get a string command to read data memory.
  *
  *  String shold be (see chap. 4.9 Omron manual 1E66)
@@ -135,18 +148,18 @@ class NullHostLink: IHostLink {
  * @|unit|RD|start|length|fcs|*CR
  * ---
  *
- * Params:  
- * unit = Node number 
-
+ * Params:
+ * unit = Node number
+ *
  * address = Beginning word address
  * length = Number of words
  *
- * Returns: RD command string 
+ * Returns: RD command string
  */
 private pure string getRDString(const(int) unit, const(int) address, const(int) length) {
-   string send = "@" 
-      ~ format("%.2d", unit) 
-      ~ "RD" 
+   string send = "@"
+      ~ format("%.2d", unit)
+      ~ "RD"
       ~ format("%.4d", address)
       ~ format("%.4d", length);
 
@@ -159,7 +172,7 @@ private pure string getRDString(const(int) unit, const(int) address, const(int) 
    getRDString(0, 258, 2).shouldEqual("@00RD025800025B*\r");
 }
 
-/**
+/*
  * Get a string command to write data memory.
  *
  * String shold be (see chap. 4.22 Omron manual 1E66)
@@ -167,13 +180,13 @@ private pure string getRDString(const(int) unit, const(int) address, const(int) 
  * @|unit|WD|address|d0|d1...|fcs|*CR|
  * ---
  *
- * Params:  
- * unit = Node number 
+ * Params:
+ * unit = Node number
  * address = Beginning word address
  * length = Number of words
  * data = Words to write
  *
- * Returns: WD command string 
+ * Returns: WD command string
  */
 private string getWDString(const(int) unit, const(int) address, const(ushort)[] data) {
    string send = "@" ~ format("%.2d", unit) ~ "WD" ~ format("%.4d", address);
@@ -187,14 +200,14 @@ private string getWDString(const(int) unit, const(int) address, const(ushort)[] 
    getWDString(2, 302, [100, 6500]).shouldEqual("@02WD03020064196458*\r");
 }
 
-/**
+/*
  * Converts a string returned by DM read into an array of `ushort`.
- * 
+ *
  * The string consists of groups of four characters, each representing a digit in hex.
  * Each group of four characters is the value of a DM
- * 
+ *
  * Eg. the string representation of `[15, 16, 17]` is  `000F 0010 0011` (spaces are added for readability)
- * 
+ *
  * Params:  input = string to convert
  * Returns:  Array of converted values
  */
@@ -218,7 +231,7 @@ private ushort[] toDM(string input) {
       "00FF8000FFFF": [0xFF, 0x8000, 0xFFFF],
       "5": [0x5],
       "12345": [0x1234, 0x5],
-   ]; 
+   ];
 
    foreach (key, value; testCase) {
       toDM(key).shouldEqual(value);
@@ -226,12 +239,12 @@ private ushort[] toDM(string input) {
    toDM("").length.shouldEqual(0);
 }
 
-/**
+/*
  * Converts a DM string representation into a numeric value $(D_CODE ushort).
- * 
+ *
  * A DM is represented by four characters: if the input string contains more, then
  * `parseFront` converts the first four, if it contains less then all available characters are converted
- * 
+ *
  * Params:  input = string to convert
  * Returns:  Converted value
  */
@@ -256,26 +269,26 @@ private pure ushort parseFront(string input) {
    parseFront("0F").shouldEqual(15);
    parseFront("0010").shouldEqual(16);
    parseFront("1").shouldEqual(1);
-} 
+}
 
-/**
+/*
  * Computes FCS of message.
- * 
- * The FCS is an 8-bit data represented by two ASCII characters (00 to FF). 
- * 
+ *
+ * The FCS is an 8-bit data represented by two ASCII characters (00 to FF).
+ *
  * It is a result of Exclusive OR sequentially performed on each character in
  * the message.
  *
  * Params:  msg = Message
- *			 
+ *
  * Returns: Mesage FCS
  */
 private pure string fcs(string msg) {
    if (msg.length == 0) {
-      return "00"; 
+      return "00";
    } else {
       /*
-         std.string.representation: 
+         std.string.representation:
          Returns the representation of a string, which has the same
          type as the string except the character type is replaced by ubyte,
          ushort, or uint depending on the character width
@@ -301,7 +314,7 @@ private pure string fcs(string msg) {
    fcs(null).shouldEqual("00");
 }
 
-/**
+/*
  * Get message data.
  *
  * The message data are between the character '@' at the start and '*' at the end.
@@ -310,13 +323,13 @@ private pure string fcs(string msg) {
  *  ---
  *  Params:  message = Input message
  *
- *  Returns: 
- * The message data if the message is valid, otherwise an empty string 
+ *  Returns:
+ * The message data if the message is valid, otherwise an empty string
  */
 private string crop(string message) {
    import std.regex;
    string data;
-   if (message.length > 0) { 
+   if (message.length > 0) {
       string pattern = r"@(?P<core>[^\*]+)\*.*";
       auto m = match(message, regex(pattern));
       if (m) {
@@ -337,7 +350,7 @@ private string crop(string message) {
    crop("@00RD000000000056*\r").shouldEqual("00RD000000000056");
 }
 
-/**
+/*
  * Returns the error code inside the response.
  *
  * In response, there are eight frame characters around error code:
@@ -381,7 +394,7 @@ private int getErrorCodeFromReply(string reply) {
 class OmronException: Exception {
    this(int errCode) {
       _errCode = errCode;
-      super(getErrorMessage(errCode)); 
+      super(getErrorMessage(errCode));
    }
    private int _errCode = 0;
    @property int errCode() {

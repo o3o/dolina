@@ -19,11 +19,11 @@ endif
 DCFLAGS += $(DBG_CODE) #compile in debug code
 DCFLAGS += $(OPTIMIZE) #optimize
 DCFLAGS += -g # add symbolic debug info
-DCFLAGS += $(WARN_AS_ERR) # warnings as errors (compilation will halt)
+#DCFLAGS += $(WARN_AS_ERR) # warnings as errors (compilation will halt)
 DCFLAGS += $(WARN_AS_MSG) # warnings as messages (compilation will continue)
 
 # release flags
-DCFLAGS_REL += -O -wi -release -inline -boundscheck=off
+DCFLAGS_REL += $(OPTIMIZE) $(WARN_AS_MSG) -release -inline -boundscheck=off
 
 DCFLAGS_TEST += -unittest
 # DCFLAGS_TEST += -main -quiet
@@ -52,7 +52,6 @@ PKG_SRC = $(PKG) $(SRC) makefile
 # -----------
 LIB += $(D_DIR)/serial-port/libserial-port.a
 DCFLAGS_IMPORT += -I$(D_DIR)/serial-port/source
-
 
 # -----------
 # Test  library
