@@ -1,7 +1,7 @@
-# dolina
-[![Dub version](https://img.shields.io/dub/v/asdf.svg)](http://code.dlang.org/packages/dolina)
+[![Dub version](https://img.shields.io/badge/dub-v0.5.0-orange.svg)](http://code.dlang.org/packages/dolina)
 [![Build Status](https://travis-ci.org/o3o/dolina.svg?branch=master)](https://travis-ci.org/o3o/dolina)
 
+# dolina
 D implementation of HostLink, a communication protocol for use with PLC's made by Omron.
 
 ## Libraries
