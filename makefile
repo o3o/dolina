@@ -1,5 +1,5 @@
 # makefile relelase 0.1.0
-NAME = libdolina
+NAME = dolina
 PROJECT_VERSION = 0.5.0
 
 ROOT_SOURCE_DIR = src
@@ -19,8 +19,8 @@ endif
 DCFLAGS += $(DBG_CODE) #compile in debug code
 DCFLAGS += $(OPTIMIZE) #optimize
 DCFLAGS += -g # add symbolic debug info
-#DCFLAGS += $(WARN_AS_ERR) # warnings as errors (compilation will halt)
-DCFLAGS += $(WARN_AS_MSG) # warnings as messages (compilation will continue)
+DCFLAGS += $(WARN_AS_ERR) # warnings as errors (compilation will halt)
+#DCFLAGS += $(WARN_AS_MSG) # warnings as messages (compilation will continue)
 
 # release flags
 DCFLAGS_REL += $(OPTIMIZE) $(WARN_AS_MSG) -release -inline -boundscheck=off
@@ -79,9 +79,10 @@ DEFAULT: all
 
 DC = dmd
 STATIC_LIB_EXT = .a
+STATIC_LIB_PRE = lib
 ifeq ($(TARGET),lib)
-	NAME_DEBUG = $(STATIC_LIBNAME)d$(STATIC_LIB_EXT)
-	NAME_REL = $(STATIC_LIBNAME)$(STATIC_LIB_EXT)
+	NAME_DEBUG = $(STATIC_LIB_PRE)$(STATIC_LIBNAME)d$(STATIC_LIB_EXT)
+	NAME_REL = $(STATIC_LIB_PRE)$(STATIC_LIBNAME)$(STATIC_LIB_EXT)
 else
 	NAME_DEBUG = $(NAME)d
 	NAME_REL = $(NAME)
@@ -134,11 +135,11 @@ builddir:
 	@$(MKDIR) $(BIN)
 
 $(BIN)/$(NAME_DEBUG): $(SRC) $(LIB)| builddir
-	$(DC) $^ $(DCFLAGS) $(DCFLAGS_IMPORT) $(DCFLAGS_LINK) $(VERSION_FLAG) $(OUTPUT)$@
+	$(DC) $^ $(VERSION_FLAG) $(DCFLAGS) $(DCFLAGS_IMPORT) $(DCFLAGS_LINK) $(DCFLAGS_J) $(OUTPUT)$@
 
 $(BIN)/$(NAME_REL): $(SRC) $(LIB)| builddir
-	$(DC) $^ $(DCFLAGS_REL) $(DCFLAGS_IMPORT) $(DCFLAGS_LINK) $(VERSION_FLAG) -of$@
-ifneq ($(TARGET), "lib")
+	$(DC) $^ $(VERSION_FLAG) $(DCFLAGS_REL) $(DCFLAGS_IMPORT) $(DCFLAGS_LINK) $(DCFLAGS_J) $(OUTPUT)$@
+ifdef COMPRESS
 	$(UPX) $@
 endif
 
@@ -199,6 +200,7 @@ var:
 	@echo NAME_DEBUG: $(NAME_DEBUG)
 	@echo NAME_REL:   $(NAME_REL)
 	@echo TARGET:     $(TARGET)
+	@echo COMPRESS:   $(COMPRESS)
 	@echo PRJ_VER:    $(PROJECT_VERSION)
 	@echo
 	@echo D_DIR: $(D_DIR)
