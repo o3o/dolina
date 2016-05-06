@@ -1,5 +1,7 @@
 # dolina
+[![Dub version](https://img.shields.io/dub/v/asdf.svg)](http://code.dlang.org/packages/dolina)
 [![Build Status](https://travis-ci.org/o3o/dolina.svg?branch=master)](https://travis-ci.org/o3o/dolina)
+
 D implementation of HostLink, a communication protocol for use with PLC's made by Omron.
 
 ## Libraries
@@ -8,7 +10,7 @@ D implementation of HostLink, a communication protocol for use with PLC's made b
 * [DMocks-revived](https://github.com/QAston/DMocks-revived)
 
 ## Acknowledgement
-The [dmrange](https://github.com/o3o/dolina/blob/master/src/dolina/dmrange.d) code is based on [binrange](https://github.com/p0nce/binrange). 
+The [dmrange](https://github.com/o3o/dolina/blob/master/src/dolina/dmrange.d) code is based on [binrange](https://github.com/p0nce/binrange).
 Thanks to ponce.
 
 ## References

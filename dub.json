@@ -22,7 +22,7 @@
          "mainSourceFile": "tests/app.d",
          "excludedSourceFiles": ["src/app.d"],
          "dependencies": {
-            "unit-threaded": "~>0.4.7",
+            "unit-threaded": "~>0.6.11",
             "dmocks-revived": "~master"
          }
       }
