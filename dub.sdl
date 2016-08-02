@@ -1,0 +1,24 @@
+name "dolina"
+version "0.5.0+commit.12.gd9c736c"
+description "Omron HostLink PLC communication library"
+authors "Orfeo Da Viá"
+copyright "Copyright © 2014, Orfeo Da Viá"
+license "LGPL v3.0.0"
+targetType "library"
+targetPath "bin"
+
+dependency "serial-port" version="~>1.1.0"
+
+configuration "library" {
+	targetType "library"
+}
+
+configuration "unittest" {
+	dependency "unit-threaded" version="~>0.6.25"
+	//dependency "dmocks-revived" version="~master"
+	targetType "executable"
+	targetName "test-runner"
+	mainSourceFile "tests/app.d"
+	sourcePaths "tests" "src"
+	excludedSourceFiles "src/app.d"
+}
