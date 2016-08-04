@@ -1,5 +1,4 @@
 name "dolina"
-version "0.5.0+commit.12.gd9c736c"
 description "Omron HostLink PLC communication library"
 authors "Orfeo Da Viá"
 copyright "Copyright © 2014, Orfeo Da Viá"
