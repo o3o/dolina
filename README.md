@@ -1,4 +1,4 @@
-[![Dub version](https://img.shields.io/badge/dub-v1.0.0-green.svg)](http://code.dlang.org/packages/dolina)
+[![Dub version](https://img.shields.io/dub/v/dolina.svg)](https://code.dlang.org/packages/dolina)
 [![Build Status](https://travis-ci.org/o3o/dolina.svg?branch=master)](https://travis-ci.org/o3o/dolina)
 [![Dub download Status](https://img.shields.io/dub/dt/dolina.svg)](https://code.dlang.org/packages/dolina)
 
