@@ -40,13 +40,13 @@ class HostLinkChannel: IHostLinkChannel {
    string read() {
       enum START = 0x40; // @
       enum END = 0x0D;  // CR
-      bool inside = false;
+      bool inside;
 
       ubyte[1] buffer;
       ubyte[] reply;
       ubyte b;
       do {
-         size_t length = serialPort.read(buffer);
+         immutable(size_t) length = serialPort.read(buffer);
          if (length > 0) {
             b = buffer[0];
             if (b == START) {

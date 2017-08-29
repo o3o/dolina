@@ -1,5 +1,9 @@
 module dolina.hostlink;
 
+version(unittest) {
+   import unit_threaded;
+}
+
 import std.array;
 import std.conv;
 import std.exception;
@@ -67,7 +71,7 @@ class HostLink: IHostLink {
       return DM_SIZE;
    }
 
-   private int _unit = 0;
+   private int _unit;
    @property int unit() {
       return _unit;
    }
@@ -94,7 +98,7 @@ class HostLink: IHostLink {
             string r = channel.read();
             string reply = crop(r);
 
-            int err = getErrorCodeFromReply(reply);
+            immutable(int) err = getErrorCodeFromReply(reply);
             if (err > 0) {
                throw new OmronException(err);
             } else {
@@ -114,7 +118,7 @@ class HostLink: IHostLink {
             channel.write(getWDString(_unit, address, data));
             string reply = crop(channel.read());
 
-            int err = getErrorCodeFromReply(reply);
+            immutable(int) err = getErrorCodeFromReply(reply);
             if (err > 0) {
                throw new OmronException(err);
             }
@@ -166,7 +170,6 @@ private pure string getRDString(const(int) unit, const(int) address, const(int) 
    send ~= fcs(send) ~ "*\r";
    return send;
 } unittest {
-   import unit_threaded;
    getRDString(0, 23, 5).shouldEqual("@00RD0023000552*\r");
    getRDString(0, 100, 2).shouldEqual("@00RD0100000255*\r");
    getRDString(0, 258, 2).shouldEqual("@00RD025800025B*\r");
@@ -190,13 +193,12 @@ private pure string getRDString(const(int) unit, const(int) address, const(int) 
  */
 private string getWDString(const(int) unit, const(int) address, const(ushort)[] data) {
    string send = "@" ~ format("%.2d", unit) ~ "WD" ~ format("%.4d", address);
-   for (size_t i = 0; i < data.length; ++i) {
+   foreach (i; 0 .. data.length) {
       send ~= format("%.4x", data[i]);
    }
    send ~= fcs(send) ~ "*\r";
    return send;
 } unittest {
-   import unit_threaded;
    getWDString(2, 302, [100, 6500]).shouldEqual("@02WD03020064196458*\r");
 }
 
@@ -218,14 +220,12 @@ private ushort[] toDM(string input) {
 
    auto data = appender!(ushort[])();
    while(input.length > 0) {
-      ushort x = parseFront(input);
+      immutable(ushort) x = parseFront(input);
       data.put(x);
       input = input.length >= 4 ? input[4..$] : [];
    }
    return data.data;
 } unittest {
-   import unit_threaded;
-
    ushort[][string] testCase = [
       "000100020003": [0x1, 0x2, 0x3],
       "00FF8000FFFF": [0xFF, 0x8000, 0xFFFF],
@@ -261,7 +261,6 @@ private pure ushort parseFront(string input) {
    // 16 indica che la stringa e' hex
    return parse!ushort(front, 16);
 } unittest {
-   import unit_threaded;
    parseFront("000F").shouldEqual(15);
    parseFront("000F00FF").shouldEqual(15);
    parseFront("000Fasd").shouldEqual(15);
@@ -294,14 +293,13 @@ private pure string fcs(string msg) {
          ushort, or uint depending on the character width
        */
       immutable(ubyte[]) b = representation(msg);
-      int fcs = 0;
-      for(int i = 0; i < b.length; i++) {
+      int fcs;
+      foreach (i; 0 .. b.length) {
          fcs ^= b[i];
       }
       return std.string.format("%.2X", fcs);
    }
 } unittest {
-   import unit_threaded;
    fcs("@02WD00").shouldEqual("51");
    fcs("12").shouldEqual("03");
    fcs("123").shouldEqual("30");
@@ -327,7 +325,7 @@ private pure string fcs(string msg) {
  * The message data if the message is valid, otherwise an empty string
  */
 private string crop(string message) {
-   import std.regex;
+   import std.regex : match, regex;
    string data;
    if (message.length > 0) {
       string pattern = r"@(?P<core>[^\*]+)\*.*";
@@ -338,7 +336,6 @@ private string crop(string message) {
    }
    return data;
 } unittest {
-   import unit_threaded;
    crop("@abc*").shouldEqual("abc");
    crop("@abc").shouldEqual("");
    crop("").shouldEqual("");
@@ -380,7 +377,6 @@ private int getErrorCodeFromReply(string reply) {
    }
    return err;
 } unittest {
-   import unit_threaded;
    getErrorCodeFromReply("02RD0015").shouldEqual(0);
    getErrorCodeFromReply("01RD0").shouldEqual(1001);
    getErrorCodeFromReply("01RD0715").shouldEqual(7);
@@ -396,7 +392,7 @@ class OmronException: Exception {
       _errCode = errCode;
       super(getErrorMessage(errCode));
    }
-   private int _errCode = 0;
+   private int _errCode;
    @property int errCode() {
       return _errCode;
    }
@@ -420,8 +416,7 @@ private pure string getErrorMessage(const(int) errorNr) {
       default: return "Unkown error code " ~ to!string(errorNr);
    }
 } unittest {
-   import unit_threaded;
-   import std.string;
+   import std.string : startsWith;
    getErrorMessage(0x44).startsWith("Unkown").shouldBeTrue;
    getErrorMessage(0x13).shouldEqual("Check sum error");
 }

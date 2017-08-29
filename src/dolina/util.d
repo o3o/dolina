@@ -2,6 +2,9 @@
  * Utility functions to convert DM
  */
 module dolina.util;
+version(unittest) {
+   import unit_threaded;
+}
 
 import std.array;
 import std.bitmanip;
@@ -37,7 +40,6 @@ ubyte[] toBytes(T)(T[] input) {
    }
    return buffer.data.dup;
 } unittest {
-   import unit_threaded;
    [0x8034].toBytes!ushort().shouldEqual([0x34, 0x80]);
 
    ushort[] buf = [0x8034, 0x2010];
@@ -65,7 +67,6 @@ ushort[] toDM(ubyte[] bytes) {
    }
    return dm;
 } unittest {
-   import unit_threaded;
    [0x10].toDM().shouldEqual([0x10]);
    [0, 0xAB].toDM().shouldEqual([0xAB00]);
    [0x20, 0x0].toDM().shouldEqual([0x20]);
@@ -89,7 +90,6 @@ ushort[] toDM(ubyte[] bytes) {
 T peekDM(T)(ushort[] words) {
    return peekDM!T(words, 0);
 } unittest {
-   import unit_threaded;
    [0x645A, 0x3ffb].peekDM!float.shouldEqual(1.964F);
 }
 
@@ -108,18 +108,17 @@ T peekDM(T)(ushort[] words, size_t index) {
    ubyte[] buffer = toBytes(words);
    return buffer.peek!(T, Endian.littleEndian)(index * BYTES_PER_DM);
 } unittest {
-   import unit_threaded;
    [0x645A, 0x3ffb].peekDM!float(0).shouldEqual(1.964F);
    [0, 0, 0x645A, 0x3ffb].peekDM!float(2).shouldEqual(1.964F);
    [0, 0, 0x645A, 0x3ffb].peekDM!float(0).shouldEqual(0);
    [0x80, 0, 0].peekDM!ushort(0).shouldEqual(128);
    [0xFFFF].peekDM!short(0).shouldEqual(-1);
-   [0xFFFF].peekDM!ushort(0).shouldEqual(65535);
-   [0xFFF7].peekDM!ushort(0).shouldEqual(65527);
+   [0xFFFF].peekDM!ushort(0).shouldEqual(65_535);
+   [0xFFF7].peekDM!ushort(0).shouldEqual(65_527);
    [0xFFF7].peekDM!short(0).shouldEqual(-9);
    [0xFFFB].peekDM!short(0).shouldEqual(-5);
-   [0xFFFB].peekDM!ushort(0).shouldEqual(65531);
-   [0x8000].peekDM!short(0).shouldEqual(-32768);
+   [0xFFFB].peekDM!ushort(0).shouldEqual(65_531);
+   [0x8000].peekDM!short(0).shouldEqual(-32_768);
 }
 
 /**
@@ -135,9 +134,9 @@ ushort toBCD(ushort dec) {
    if ((dec > MAX_VALUE) || (dec < MIN_VALUE)) {
       throw new Exception("Decimal out of range (should be 0..9999)");
    } else {
-      ushort bcd = 0;
+      ushort bcd;
       enum ushort NUM_BASE = 10;
-      ushort i = 0;
+      ushort i;
       for(; dec > 0; dec /= NUM_BASE) {
          ushort rem = cast(ushort)(dec % NUM_BASE);
          bcd += cast(ushort)(rem << 4 * i++);
@@ -145,14 +144,13 @@ ushort toBCD(ushort dec) {
       return bcd;
    }
 } unittest {
-   import unit_threaded;
    0.toBCD().shouldEqual(0);
    10.toBCD().shouldEqual(0x10);
    34.toBCD().shouldEqual(52);
    127.toBCD().shouldEqual(0x127);
    110.toBCD().shouldEqual(0x110);
    9999.toBCD().shouldEqual(0x9999);
-   9999.toBCD().shouldEqual(39321);
+   9999.toBCD().shouldEqual(39_321);
 }
 
 /**
@@ -169,9 +167,9 @@ ushort fromBCD(ushort bcd) {
    if ((bcd > MAX_VALUE) || (bcd < MIN_VALUE)) {
       throw new Exception("BCD out of range (should be 0..39321)");
    } else {
-      ushort dec = 0;
+      ushort dec;
       ushort weight = 1;
-      for (int j = 0; j < NO_OF_DIGITS; j++) {
+      foreach (j; 0 .. NO_OF_DIGITS) {
          dec += cast(ushort)((bcd & 0x0F) * weight);
          bcd = cast(ushort)(bcd >> 4);
          weight *= 10;
@@ -179,7 +177,6 @@ ushort fromBCD(ushort bcd) {
       return dec;
    }
 } unittest {
-   import unit_threaded;
    0.fromBCD().shouldEqual(0);
 
    (0x22).fromBCD().shouldEqual(22);
@@ -187,6 +184,6 @@ ushort fromBCD(ushort bcd) {
    // 17bcd
    (0b0001_0111).fromBCD().shouldEqual(17);
    295.fromBCD().shouldEqual(127);
-   39321.fromBCD().shouldEqual(9999);
-   (0x9999).fromBCD().shouldEqual(9999);
+   39_321.fromBCD().shouldEqual(9_999);
+   (0x9999).fromBCD().shouldEqual(9_999);
 }

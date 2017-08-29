@@ -1,5 +1,9 @@
 module dolina.dmrange;
 
+version(unittest) {
+   import unit_threaded;
+}
+
 import std.range;
 import std.traits; // signed
 import std.stdio;
@@ -31,7 +35,6 @@ T pop(T, R)(ref R input) if ((isInputRange!R)
       static assert(false, "Unsupported type " ~ T.stringof);
    }
 } unittest {
-   import unit_threaded;
 
    ushort[] input = [0x1eb8, 0xc19d];
    input.length.shouldEqual(2);
@@ -64,8 +67,6 @@ T pop(T, R)(ref R input) if ((isInputRange!R)
    ushort[] asPeek = [0x645A, 0x3ffb];
    asPeek.pop!float.shouldEqual(1.964F);
 } unittest {
-   import unit_threaded;
-
    ushort[] input = [0x1eb8, 0xc19d
       , 0x0, 0xBF00, 0x0, 0x3F00
       , 0x0, 0x0, 0x0, 0x3FE0
@@ -88,8 +89,6 @@ T pop(T, R)(ref R input) if ((isInputRange!R)
    pop!ushort(input).shouldEqual(0xFFFB);
    pop!short(input).shouldEqual(-5);
 } unittest {
-   import unit_threaded;
-
    ushort[] shortBuffer = [0x645A];
    shortBuffer.length.shouldEqual(1);
    shortBuffer.pop!float().shouldThrow!Exception;
@@ -112,7 +111,7 @@ private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInput
    alias T = IntegerLargerThan!(numDM);
    T result = 0;
 
-   for (int i = 0; i < numDM; ++i) {
+   foreach (i; 0 .. numDM) {
       result |= ( cast(T)(popDM(input)) << (16 * i) );
    }
 
@@ -122,8 +121,6 @@ private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInput
       return result;
    }
 } unittest {
-   import unit_threaded;
-
    ushort[] input = [0x00, 0x01, 0x02, 0x03];
    popInteger!(ushort[], 2, false)(input).shouldEqual(0x10000);
    popInteger!(ushort[], 2, false)(input).shouldEqual(0x30002);
@@ -162,7 +159,7 @@ private ushort popDM(R)(ref R input) if ((isInputRange!R) && is(ElementType!R : 
       throw new Exception("Expected a ushort, but found end of input");
    }
 
-   ushort d = input.front;
+   const(ushort) d = input.front;
    input.popFront();
    return d;
 }
@@ -198,8 +195,6 @@ void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
       static assert(false, "Unsupported type " ~ T.stringof);
    }
 } unittest {
-   import unit_threaded;
-
    ushort[] arr;
    auto app = appender(arr);
    write!float(app, 1.0f);
@@ -210,8 +205,7 @@ void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
       0, 0, 0, 0x4000];
    app.data.shouldEqual(expected);
 } unittest {
-   import std.array;
-   import unit_threaded;
+   import std.array : appender;
 
    auto app = appender!(const(ushort)[]);
    app.write!ushort(5);
@@ -227,8 +221,8 @@ void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
 private void writeInteger(R, int numDM)(ref R output, IntegerLargerThan!numDM n) if (isOutputRange!(R, ushort)) {
    alias T = IntegerLargerThan!numDM;
    auto u = cast(Unsigned!T)n;
-   for (int i = 0; i < numDM; ++i) {
-      ushort b = (u >> (i * 16)) & 0xFFFF;
+   foreach (i; 0 .. numDM) {
+      immutable(ushort) b = (u >> (i * 16)) & 0xFFFF;
       output.put(b);
    }
 }
@@ -238,7 +232,6 @@ private float uint2float(uint x) pure nothrow {
    fi.i = x;
    return fi.f;
 } unittest {
-   import unit_threaded;
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    uint2float(0x24369620).shouldEqual(3.959212E-17F);
    uint2float(0x3F000000).shouldEqual(0.5F);
@@ -255,7 +248,6 @@ private uint float2uint(float x) pure nothrow {
    fi.f = x;
    return fi.i;
 } unittest {
-   import unit_threaded;
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    float2uint(3.959212E-17F).shouldEqual(0x24369620);
    float2uint(.5F).shouldEqual(0x3F000000);
@@ -278,7 +270,6 @@ double ulong2double(ulong x) pure nothrow {
    fi.i = x;
    return fi.f;
 } unittest {
-   import unit_threaded;
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    ulong2double(0x0).shouldEqual(0);
    ulong2double(0x3fe0000000000000).shouldEqual(0.5);
@@ -290,7 +281,6 @@ private ulong double2ulong(double x) pure nothrow {
    fi.f = x;
    return fi.i;
 } unittest {
-   import unit_threaded;
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    double2ulong(0).shouldEqual(0);
    double2ulong(0.5).shouldEqual(0x3fe0000000000000);
