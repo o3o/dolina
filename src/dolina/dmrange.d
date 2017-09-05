@@ -11,17 +11,12 @@ import std.array;
 
 /**
  * Takes an input range of DM (ushort) and converts the first `T.sizeof / 2`
- * DM to `T`.
+ * DM's to `T`.
  * The array is consumed.
  *
  * Params:
  * T = The integral type to convert the first `T.sizeof / 2` DM to.
  * input = The input range of DM to convert
- *
- * Examples:
- * --------------------
- * assert([0x645A, 0x3ffb].pop!float() == 1.964F);
- * --------------------
  */
 T pop(T, R)(ref R input) if ((isInputRange!R)
       && is(ElementType!R : const ushort)) {
@@ -34,19 +29,39 @@ T pop(T, R)(ref R input) if ((isInputRange!R)
    } else {
       static assert(false, "Unsupported type " ~ T.stringof);
    }
-} unittest {
+}
 
+/**
+ * pop!float example
+ */
+unittest {
+   ushort[] asPeek = [0x645A, 0x3ffb];
+   asPeek.pop!float.shouldEqual(1.964F);
+   asPeek.length.shouldEqual(0);
+
+   // float.sizeOf is 4bytes => 2 DM
    ushort[] input = [0x1eb8, 0xc19d];
    input.length.shouldEqual(2);
    pop!float(input).shouldEqual(-19.64F);
    input.length.shouldEqual(0);
 
    input = [0x0, 0xBF00, 0x0, 0x3F00];
-   pop!float(input).shouldEqual(-0.5F);
+   input.pop!float.shouldEqual(-0.5F);
    pop!float(input).shouldEqual(0.5F);
+}
 
-   input = [0x0, 0x0, 0x0, 0x3FE0];
+/**
+ * `pop!double` examples
+ *
+ * A double has size 8 bytes => 4DM
+ */
+unittest {
+   ushort[] input = [0x0, 0x0, 0x0, 0x3FE0];
+   input.length.shouldEqual(4);
+
    pop!double(input).shouldEqual(0.5);
+   input.length.shouldEqual(0);
+
    input = [0x0, 0x0, 0x0, 0xBFE0];
    pop!double(input).shouldEqual(-0.5);
 
@@ -56,16 +71,19 @@ T pop(T, R)(ref R input) if ((isInputRange!R)
    input.length.shouldEqual(2);
    pop!int(input).shouldEqual(0x30002);
    input.length.shouldEqual(0);
+}
 
-   input = [0xFFFF, 0xFFFF, 0xFFFB, 0xFFFB];
+/**
+ * pop!ushort and short examples
+ */
+unittest {
+   ushort[] input = [0xFFFF, 0xFFFF, 0xFFFB, 0xFFFB];
    pop!ushort(input).shouldEqual(0xFFFF);
    pop!short(input).shouldEqual(-1);
    pop!ushort(input).shouldEqual(0xFFFB);
    pop!short(input).shouldEqual(-5);
 
 
-   ushort[] asPeek = [0x645A, 0x3ffb];
-   asPeek.pop!float.shouldEqual(1.964F);
 } unittest {
    ushort[] input = [0x1eb8, 0xc19d
       , 0x0, 0xBF00, 0x0, 0x3F00
@@ -165,11 +183,10 @@ private ushort popDM(R)(ref R input) if ((isInputRange!R) && is(ElementType!R : 
 }
 
 /**
- * Writes type `T` into a output range of `ushort`
- *
+ * Writes numeric type *T* into a output range of *ushort*.
  *
  * Params:
- * n = The integral type to write into output range
+ * n = The numeric type to write into output range
  * output = The output range of DM to convert
  *
  * Examples:
@@ -194,17 +211,27 @@ void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
    } else {
       static assert(false, "Unsupported type " ~ T.stringof);
    }
-} unittest {
+}
+/**
+ * Write float and double
+ */
+unittest {
    ushort[] arr;
    auto app = appender(arr);
    write!float(app, 1.0f);
-   write!double(app, 2.0);
+
+   app.write!double(2.0);
 
    ushort[] expected = [
       0, 0x3f80,
       0, 0, 0, 0x4000];
    app.data.shouldEqual(expected);
-} unittest {
+}
+
+/**
+ * Write ushort and int
+ */
+unittest {
    import std.array : appender;
 
    auto app = appender!(const(ushort)[]);
@@ -260,7 +287,7 @@ private uint float2uint(float x) pure nothrow {
 }
 
 // read/write 64-bits float
-union float_uint {
+private union float_uint {
    float f;
    uint i;
 }
@@ -287,7 +314,7 @@ private ulong double2ulong(double x) pure nothrow {
    double2ulong(-0.5).shouldEqual(0xbfe0000000000000);
 }
 
-union double_ulong {
+private union double_ulong {
    double f;
    ulong i;
 }

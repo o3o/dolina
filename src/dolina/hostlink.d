@@ -1,3 +1,6 @@
+/**
+ * Omron HostLink protocols
+ */
 module dolina.hostlink;
 
 version(unittest) {
@@ -17,21 +20,21 @@ import dolina.channel;
  */
 interface IHostLink {
    /**
-    * Reads the contents of specified DM words, starting from the specified
-    * word.
+    * Reads the contents of specified DM $(D ushort), starting from the specified
+    * address.
     *
     * Params:
-    * address = Beginning word address
-    * length = Number of words
+    * address = Beginning DM address
+    * length = Number of DM to read
     */
    ushort[] readDM(const(int) address, const(int) length);
 
    /**
-    * Writes data to the DM area, starting from the specified word.
+    * Writes data to the DM area, starting from the specified address.
     *
     * Params:
-    * address = Beginning word address
-    * data = Words to write
+    * address = Beginning DM address
+    * data = DM ($(D ushort)) to write
     *
     * Examples:
     * --------------------
@@ -44,13 +47,13 @@ interface IHostLink {
    void writeDM(const(int) address, const(ushort)[] data);
 
    /**
-    * Unit number.
+    * PLC Unit number.
     */
    @property int unit();
    @property void unit(int u);
 
    /**
-    * Data memory area size (words)
+    * Data memory area size (DM)
     */
    @property int dataMemorySize();
 }
@@ -126,6 +129,10 @@ class HostLink: IHostLink {
       }
 }
 
+
+/**
+ * The NullHostLing will not read or write.
+ */
 class NullHostLink: IHostLink {
    ushort[] readDM(const(int) address, const(int) length) {
       return new ushort[length];

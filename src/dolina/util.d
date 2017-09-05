@@ -14,24 +14,19 @@ import std.range;
 /**
  * Bytes per each DM.
  *
- * A DM is a `ushort`, so each DM has 2 bytes
+ * A DM is a $(D`ushort), so each DM has 2 bytes
  */
 enum BYTES_PER_DM = 2;
 
 /**
- * Converts an array of type T into ubyte array.
+ * Converts an array of type T into an ubyte array.
  *
  * Omron stores data in LittleEndian format.
  *
- * Examples:
- * --------------------
- *  ushort[] buf = [0x8034, 0x2010];
- *  assert(buf.toBytes!ushort() == [0x34, 0x80, 0x10, 0x20]);
- * --------------------
  *
  * Params:  input = array to convert
  *
- * Returns: bytes rapresentation
+ * Returns: An array of ubyte
  */
 ubyte[] toBytes(T)(T[] input) {
    auto buffer = appender!(const(ubyte)[])();
@@ -39,7 +34,9 @@ ubyte[] toBytes(T)(T[] input) {
       buffer.append!(T, Endian.littleEndian)(dm);
    }
    return buffer.data.dup;
-} unittest {
+}
+///
+unittest {
    [0x8034].toBytes!ushort().shouldEqual([0x34, 0x80]);
 
    ushort[] buf = [0x8034, 0x2010];
@@ -66,7 +63,10 @@ ushort[] toDM(ubyte[] bytes) {
       dm ~= bytes[0];
    }
    return dm;
-} unittest {
+}
+
+///
+unittest {
    [0x10].toDM().shouldEqual([0x10]);
    [0, 0xAB].toDM().shouldEqual([0xAB00]);
    [0x20, 0x0].toDM().shouldEqual([0x20]);
@@ -74,40 +74,42 @@ ushort[] toDM(ubyte[] bytes) {
 }
 
 /**
- * Takes an array of DM (ushort) and converts the first `T.sizeof / 2`
- * DM to `T`.
- * The array is *not* consumed.
+ * Takes an array of DM (ushort) and converts the first $(D T.sizeof / 2)
+ * DM to $(D T).
+ * The array is **not** consumed.
  *
  * Params:
  * T = The integral type to convert the first `T.sizeof / 2` words to.
  * words = The array of DM to convert
  *
- * Examples:
- * --------------------
- * assert([0x645A, 0x3ffb].peekDM!float() == 1.964F);
- * --------------------
  */
 T peekDM(T)(ushort[] words) {
    return peekDM!T(words, 0);
-} unittest {
-   [0x645A, 0x3ffb].peekDM!float.shouldEqual(1.964F);
+}
+///
+unittest {
+   ushort[] words = [0x645A, 0x3ffb];
+   words.peekDM!float.shouldEqual(1.964F);
+   words.length.shouldEqual(2);
 }
 
 /**
- * Takes an array of DM (`ushort`) and converts the first `T.sizeof / 2`
- * DM to `T` starting from index `index`.
+ * Takes an array of DM ($(D ushort() and converts the first $D T.sizeof / 2)
+ * DM to $(D T) starting from index *index*.
  *
- * The array is *not* consumed.
+ * The array is **not** consumed.
  *
  * Params:
- * T = The integral type to convert the first `T.sizeof / 2` words to.
+ * T = The integral type to convert the first `T.sizeof / 2` DM to.
  * words = The array of DM to convert
  * index = The index to start reading from (instead of starting at the front).
  */
 T peekDM(T)(ushort[] words, size_t index) {
    ubyte[] buffer = toBytes(words);
    return buffer.peek!(T, Endian.littleEndian)(index * BYTES_PER_DM);
-} unittest {
+}
+///
+unittest {
    [0x645A, 0x3ffb].peekDM!float(0).shouldEqual(1.964F);
    [0, 0, 0x645A, 0x3ffb].peekDM!float(2).shouldEqual(1.964F);
    [0, 0, 0x645A, 0x3ffb].peekDM!float(0).shouldEqual(0);
@@ -143,7 +145,9 @@ ushort toBCD(ushort dec) {
       }
       return bcd;
    }
-} unittest {
+}
+///
+unittest {
    0.toBCD().shouldEqual(0);
    10.toBCD().shouldEqual(0x10);
    34.toBCD().shouldEqual(52);
@@ -176,7 +180,9 @@ ushort fromBCD(ushort bcd) {
       }
       return dec;
    }
-} unittest {
+}
+///
+unittest {
    0.fromBCD().shouldEqual(0);
 
    (0x22).fromBCD().shouldEqual(22);
