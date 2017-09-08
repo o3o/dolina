@@ -85,7 +85,7 @@ run: build
 
 
 test:
-	$(DUB) test -q $(SEP) $(WHERE)
+	$(DUB) test $(DUBFLAGS) $(SEP) $(WHERE)
 testd:
 	$(DUB) test -q -- -d $(WHERE)
 testc:
@@ -157,12 +157,14 @@ ver:
 	@echo $(PROJECT_VERSION)
 
 var:
+	@echo
 	@echo "General"
 	@echo "--------------------"
 	@echo "NAME     :" $(NAME)
 	@echo "BIN_NAME :" $(BIN_NAME)
 	@echo "PRJ_VER  :" $(PROJECT_VERSION)
 	@echo "DUBFLAGS :" $(DUBFLAGS)
+	@echo "DUB FILE :" $(SDL_FILE)
 	@echo
 	@echo "Directory"
 	@echo "--------------------"
@@ -193,7 +195,7 @@ help:
 	@echo "   build   : Compiles in debug mode"
 	@echo "   force   : Forces a recompilation"
 	@echo "   run     : Builds and runs"
-	@echo "   test    : Builds and executes the tests"
+	@echo "   test    : Build and executes the tests"
 	@echo "   testd   : Enable debug output"
 	@echo "   testc   : Print execution time per test"
 	@echo "   testl   : Lists tests"
