@@ -1,4 +1,5 @@
 name "dolina"
+
 description "Omron HostLink PLC communication library"
 authors "Orfeo Da Viá"
 copyright "Copyright © 2014, Orfeo Da Viá"
@@ -13,10 +14,13 @@ configuration "library" {
 }
 
 configuration "unittest" {
-	dependency "unit-threaded" version="~>0.7.28"
-	targetType "executable"
 	targetName "test-runner"
 	mainSourceFile "tests/app.d"
-	sourcePaths "tests" "src"
-	excludedSourceFiles "src/app.d"
+   targetType "executable"
+   sourcePaths "tests"
+   versions "StdLoggerDisableLogging"
+
+   dependency "unit-threaded" version="~>0.7.28"
+   // serve per generare i tests
+   preBuildCommands "dub run unit-threaded -c gen_ut_main -- -f tests/app.d"
 }
