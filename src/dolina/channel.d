@@ -65,3 +65,41 @@ class HostLinkChannel: IHostLinkChannel {
       serialPort.write(cast(void[])message);
    }
 }
+
+
+// https://forum.dlang.org/thread/kpvypzrhwbeizzkkamkc@forum.dlang.org
+class HLChannel(S=SerialPort): IHostLinkChannel {
+   private S serialPort;
+   this(S serialPort) {
+      enforce(serialPort !is null);
+      this.serialPort = serialPort;
+   }
+
+   string read() {
+      enum START = 0x40; // @
+      enum END = 0x0D;  // CR
+      bool inside;
+
+      ubyte[1] buffer;
+      ubyte[] reply;
+      ubyte b;
+      do {
+         immutable(size_t) length = serialPort.read(buffer);
+         if (length > 0) {
+            b = buffer[0];
+            if (b == START) {
+               inside = true;
+            }
+            if (inside) {
+               reply ~= b;
+            }
+         }
+
+      } while (b != END);
+      return cast(string)(reply).idup;
+   }
+
+   void write(string message) {
+      serialPort.write(cast(void[])message);
+   }
+}
