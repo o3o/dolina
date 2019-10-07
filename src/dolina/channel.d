@@ -66,9 +66,12 @@ class HostLinkChannel: IHostLinkChannel {
    }
 }
 
-
 // https://forum.dlang.org/thread/kpvypzrhwbeizzkkamkc@forum.dlang.org
+//if ( __traits(hasMember, S, "read"))
 class HLChannel(S=SerialPort): IHostLinkChannel {
+   static assert( __traits(hasMember, S, "read"));
+   static assert( __traits(hasMember, S, "write"));
+
    private S serialPort;
    this(S serialPort) {
       enforce(serialPort !is null);
