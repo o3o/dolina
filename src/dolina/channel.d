@@ -106,3 +106,41 @@ class HLChannel(S=SerialPort): IHostLinkChannel {
       serialPort.write(cast(void[])message);
    }
 }
+
+unittest {
+   class SerialMockW {
+      bool writeDone;
+      void write(const(void[]) arr) {
+         writeDone = true;
+      }
+      size_t read(void[] arr) {
+         return 3;
+      }
+   }
+   auto serial = new SerialMockW();
+
+   IHostLinkChannel chan = new HLChannel!SerialMockW(serial);
+   assert(!serial.writeDone);
+   chan.write("a");
+   assert(serial.writeDone);
+}
+unittest {
+   class SerialMockR {
+      void write(const(void[]) arr) {}
+
+      private ubyte[] buf = [0x39, 0x40, 0x41, 0x0D, 0x43, 0x44];
+      private size_t ptr;
+      size_t read(void[] arr) {
+         ubyte[] b = cast(ubyte[])arr;
+         b[0] = buf[ptr++];
+         return 1;
+      }
+   }
+
+   auto serial = new SerialMockR();
+
+   IHostLinkChannel chan = new HLChannel!SerialMockR(serial);
+   string msg = chan.read();
+   assert(msg.length == 3);
+   assert(msg == "@A" ~ '\r');
+}

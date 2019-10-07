@@ -19,7 +19,6 @@ void readShouldSendValidString() {
    m.verify();
 }
 
-
 @UnitTest
 void writeShouldSendValidString() {
    auto chan = mock!IHostLinkChannel;
@@ -48,10 +47,10 @@ void GivenBigDataWriteShouldSendMultiplePack() {
    chan.expect!"read";
 
    chan.returnValue!"read"(
-      "@02WD0015*",
-      "@02WD0015*",
-      "@02WD0015*"
-      );
+         "@02WD0015*",
+         "@02WD0015*",
+         "@02WD0015*"
+         );
 
    auto host = new HostLink(chan);
    host.unit = 2;
