@@ -3,7 +3,7 @@
  */
 module dolina.hostlink;
 
-version(unittest) {
+version (unittest) {
    import unit_threaded;
 }
 
@@ -61,7 +61,7 @@ interface IHostLink {
 /**
  * Provides the implementation for HostLink protocol
  */
-class HostLink: IHostLink {
+class HostLink : IHostLink {
    private IHostLinkChannel channel;
 
    this(IHostLinkChannel channel) {
@@ -86,69 +86,74 @@ class HostLink: IHostLink {
 
    private enum MAX_FRAME_SIZE = 29;
    ushort[] readDM(const(int) address, const(int) length)
-      in {
-         assert(address >= 0, "negative address");
-         assert(length >= 0, "negative lenght");
-      } body {
-         if (length > MAX_FRAME_SIZE) {
-            return readDM(address, MAX_FRAME_SIZE) ~ readDM(address + MAX_FRAME_SIZE, length - MAX_FRAME_SIZE);
-         } else if (length <= 0) {
-            return null;
+   in {
+      assert(address >= 0, "negative address");
+      assert(length >= 0, "negative lenght");
+   }
+   do {
+      if (length > MAX_FRAME_SIZE) {
+         return readDM(address, MAX_FRAME_SIZE) ~ readDM(address + MAX_FRAME_SIZE, length - MAX_FRAME_SIZE);
+      } else if (length <= 0) {
+         return null;
+      } else {
+         string w = getRDString(_unit, address, length);
+         channel.write(w);
+
+         string r = channel.read();
+         string reply = crop(r);
+
+         immutable(int) err = getErrorCodeFromReply(reply);
+         if (err > 0) {
+            throw new OmronException(err);
          } else {
-            string w = getRDString(_unit, address, length);
-            channel.write(w);
-
-            string r = channel.read();
-            string reply = crop(r);
-
-            immutable(int) err = getErrorCodeFromReply(reply);
-            if (err > 0) {
-               throw new OmronException(err);
-            } else {
-               return toDM(reply[6 .. $ - 2]);
-            }
+            return toDM(reply[6 .. $ - 2]);
          }
       }
+   }
 
    void writeDM(const(int) address, const(ushort)[] data)
-      in {
-         assert(address >= 0, "negative address");
-      } body {
-         if (data.length > MAX_FRAME_SIZE) {
-            writeDM(address, data[0 .. MAX_FRAME_SIZE]);
-            writeDM(address + MAX_FRAME_SIZE, data[MAX_FRAME_SIZE .. $]);
-         } else {
-            channel.write(getWDString(_unit, address, data));
-            string reply = crop(channel.read());
+   in {
+      assert(address >= 0, "negative address");
+   }
+   do {
+      if (data.length > MAX_FRAME_SIZE) {
+         writeDM(address, data[0 .. MAX_FRAME_SIZE]);
+         writeDM(address + MAX_FRAME_SIZE, data[MAX_FRAME_SIZE .. $]);
+      } else {
+         channel.write(getWDString(_unit, address, data));
+         string reply = crop(channel.read());
 
-            immutable(int) err = getErrorCodeFromReply(reply);
-            if (err > 0) {
-               throw new OmronException(err);
-            }
+         immutable(int) err = getErrorCodeFromReply(reply);
+         if (err > 0) {
+            throw new OmronException(err);
          }
       }
+   }
 }
-
 
 /**
  * The NullHostLing will not read or write.
  */
-class NullHostLink: IHostLink {
+class NullHostLink : IHostLink {
    ushort[] readDM(const(int) address, const(int) length) {
       return new ushort[length];
    }
 
-   void writeDM(const(int) address, const(ushort)[] data) { }
+   void writeDM(const(int) address, const(ushort)[] data) {
+   }
 
    private int _unit;
    @property int unit() {
       return _unit;
    }
+
    @property void unit(int u) {
       _unit = u;
    }
 
-   @property int dataMemorySize() { return 100; }
+   @property int dataMemorySize() {
+      return 100;
+   }
 }
 
 /*
@@ -168,15 +173,13 @@ class NullHostLink: IHostLink {
  * Returns: RD command string
  */
 private pure string getRDString(const(int) unit, const(int) address, const(int) length) {
-   string send = "@"
-      ~ format("%.2d", unit)
-      ~ "RD"
-      ~ format("%.4d", address)
-      ~ format("%.4d", length);
+   string send = "@" ~ format("%.2d", unit) ~ "RD" ~ format("%.4d", address) ~ format("%.4d", length);
 
    send ~= fcs(send) ~ "*\r";
    return send;
-} unittest {
+}
+
+unittest {
    getRDString(0, 23, 5).shouldEqual("@00RD0023000552*\r");
    getRDString(0, 100, 2).shouldEqual("@00RD0100000255*\r");
    getRDString(0, 258, 2).shouldEqual("@00RD025800025B*\r");
@@ -205,7 +208,9 @@ private string getWDString(const(int) unit, const(int) address, const(ushort)[] 
    }
    send ~= fcs(send) ~ "*\r";
    return send;
-} unittest {
+}
+
+unittest {
    getWDString(2, 302, [100, 6500]).shouldEqual("@02WD03020064196458*\r");
 }
 
@@ -226,18 +231,17 @@ private ushort[] toDM(string input) {
    // array.
 
    auto data = appender!(ushort[])();
-   while(input.length > 0) {
+   while (input.length > 0) {
       immutable(ushort) x = parseFront(input);
       data.put(x);
-      input = input.length >= 4 ? input[4..$] : [];
+      input = input.length >= 4 ? input[4 .. $] : [];
    }
    return data.data;
-} unittest {
+}
+
+unittest {
    ushort[][string] testCase = [
-      "000100020003": [0x1, 0x2, 0x3],
-      "00FF8000FFFF": [0xFF, 0x8000, 0xFFFF],
-      "5": [0x5],
-      "12345": [0x1234, 0x5],
+      "000100020003" : [0x1, 0x2, 0x3], "00FF8000FFFF" : [0xFF, 0x8000, 0xFFFF], "5" : [0x5], "12345" : [0x1234, 0x5],
    ];
 
    foreach (key, value; testCase) {
@@ -260,14 +264,16 @@ private pure ushort parseFront(string input) {
 
    string front;
    if (input.length >= 4) {
-      front = input[0..4];
+      front = input[0 .. 4];
    } else {
-      front = input[0..$];
+      front = input[0 .. $];
    }
    // std.conv
    // 16 indica che la stringa e' hex
    return parse!ushort(front, 16);
-} unittest {
+}
+
+unittest {
    parseFront("000F").shouldEqual(15);
    parseFront("000F00FF").shouldEqual(15);
    parseFront("000Fasd").shouldEqual(15);
@@ -306,7 +312,9 @@ private pure string fcs(string msg) {
       }
       return std.string.format("%.2X", fcs);
    }
-} unittest {
+}
+
+unittest {
    fcs("@02WD00").shouldEqual("51");
    fcs("12").shouldEqual("03");
    fcs("123").shouldEqual("30");
@@ -333,6 +341,7 @@ private pure string fcs(string msg) {
  */
 private string crop(string message) {
    import std.regex : match, regex;
+
    string data;
    if (message.length > 0) {
       string pattern = r"@(?P<core>[^\*]+)\*.*";
@@ -342,7 +351,9 @@ private string crop(string message) {
       }
    }
    return data;
-} unittest {
+}
+
+unittest {
    crop("@abc*").shouldEqual("abc");
    crop("@abc").shouldEqual("");
    crop("").shouldEqual("");
@@ -378,12 +389,14 @@ private int getErrorCodeFromReply(string reply) {
    writeln("errcode imp: ", reply);
 
    if (reply.length > 5) {
-      string code = reply[4..6];
+      string code = reply[4 .. 6];
       writeln("errcode: ", code);
       err = parse!int(code, 16);
    }
    return err;
-} unittest {
+}
+
+unittest {
    getErrorCodeFromReply("02RD0015").shouldEqual(0);
    getErrorCodeFromReply("01RD0").shouldEqual(1001);
    getErrorCodeFromReply("01RD0715").shouldEqual(7);
@@ -394,11 +407,12 @@ private int getErrorCodeFromReply(string reply) {
    getErrorCodeFromReply("00RD1354").shouldEqual(0x13);
 }
 
-class OmronException: Exception {
+class OmronException : Exception {
    this(int errCode) {
       _errCode = errCode;
       super(getErrorMessage(errCode));
    }
+
    private int _errCode;
    @property int errCode() {
       return _errCode;
@@ -407,23 +421,40 @@ class OmronException: Exception {
 
 private pure string getErrorMessage(const(int) errorNr) {
    switch (errorNr) {
-      case 0x00: return "Success";
-      case 0x01: return "Execution was not possible the PLC is in RUN mode";
-      case 0x13: return "Check sum error";
-      case 0x14: return "Command format error";
-      case 0x15: return "An incorrect data area designation was made for READ or WRITE";
-      case 0x18: return "Frame length error";
-      case 0x22: return "The specified memory unit does not exists";
-      case 0x23: return "The specified memory unit is write protected";
-      case 0xA3: return "Aborted due to checksum error in transmit data";
-      case 0xA5: return "Aborted due to entry number data error in transmit data";
-      case 0xA6: return "Aborted due to frame length error in transmit data";
-      case 0x3E8: return "dolina: Frame lenght error in received data"; //10000
-      case 0x3E9: return "dolina: Invalid format of error code"; // 1001
-      default: return "Unkown error code " ~ to!string(errorNr);
+      case 0x00:
+         return "Success";
+      case 0x01:
+         return "Execution was not possible the PLC is in RUN mode";
+      case 0x13:
+         return "Check sum error";
+      case 0x14:
+         return "Command format error";
+      case 0x15:
+         return "An incorrect data area designation was made for READ or WRITE";
+      case 0x18:
+         return "Frame length error";
+      case 0x22:
+         return "The specified memory unit does not exists";
+      case 0x23:
+         return "The specified memory unit is write protected";
+      case 0xA3:
+         return "Aborted due to checksum error in transmit data";
+      case 0xA5:
+         return "Aborted due to entry number data error in transmit data";
+      case 0xA6:
+         return "Aborted due to frame length error in transmit data";
+      case 0x3E8:
+         return "dolina: Frame lenght error in received data"; //10000
+      case 0x3E9:
+         return "dolina: Invalid format of error code"; // 1001
+      default:
+         return "Unkown error code " ~ to!string(errorNr);
    }
-} unittest {
+}
+
+unittest {
    import std.string : startsWith;
+
    getErrorMessage(0x44).startsWith("Unkown").shouldBeTrue;
    getErrorMessage(0x13).shouldEqual("Check sum error");
 }

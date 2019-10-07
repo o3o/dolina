@@ -2,7 +2,7 @@
  * Utility functions to convert DM
  */
 module dolina.util;
-version(unittest) {
+version (unittest) {
    import unit_threaded;
 }
 
@@ -110,6 +110,7 @@ unittest {
  */
 T peekDM(T)(ushort[] words, size_t index) {
    import std.bitmanip : peek;
+
    ubyte[] buffer = toBytes(words);
    return buffer.peek!(T, Endian.littleEndian)(index * BYTES_PER_DM);
 }
@@ -145,7 +146,7 @@ ushort toBCD(ushort dec) {
       ushort bcd;
       enum ushort NUM_BASE = 10;
       ushort i;
-      for(; dec > 0; dec /= NUM_BASE) {
+      for (; dec > 0; dec /= NUM_BASE) {
          ushort rem = cast(ushort)(dec % NUM_BASE);
          bcd += cast(ushort)(rem << 4 * i++);
       }
@@ -210,10 +211,10 @@ unittest {
  * T = The integral type to convert the first `T.sizeof / 2` DM to.
  * input = The input range of DM to convert
  */
-T pop(T, R)(ref R input) if ((isInputRange!R)
-      && is(ElementType!R : const ushort)) {
+T pop(T, R)(ref R input) if ((isInputRange!R) && is(ElementType!R : const ushort)) {
    import std.traits : isIntegral, isSigned;
-   static if(isIntegral!T) {
+
+   static if (isIntegral!T) {
       return popInteger!(R, T.sizeof / 2, isSigned!T)(input);
    } else static if (is(T == float)) {
       return uint2float(popInteger!(R, 2, false)(input));
@@ -275,13 +276,13 @@ unittest {
    pop!short(input).shouldEqual(-1);
    pop!ushort(input).shouldEqual(0xFFFB);
    pop!short(input).shouldEqual(-5);
-} unittest {
-   ushort[] input = [0x1eb8, 0xc19d
-      , 0x0, 0xBF00, 0x0, 0x3F00
-      , 0x0, 0x0, 0x0, 0x3FE0
-      , 0x0, 0x0, 0x0, 0xBFE0
-      , 0x00, 0x01, 0x02, 0x03
-      , 0xFFFF, 0xFFFF, 0xFFFB, 0xFFFB];
+}
+
+unittest {
+   ushort[] input = [
+      0x1eb8, 0xc19d, 0x0, 0xBF00, 0x0, 0x3F00, 0x0, 0x0, 0x0, 0x3FE0, 0x0, 0x0, 0x0, 0xBFE0, 0x00, 0x01, 0x02, 0x03,
+      0xFFFF, 0xFFFF, 0xFFFB, 0xFFFB
+   ];
 
    pop!float(input).shouldEqual(-19.64F);
    pop!float(input).shouldEqual(-0.5F);
@@ -297,7 +298,9 @@ unittest {
    pop!short(input).shouldEqual(-1);
    pop!ushort(input).shouldEqual(0xFFFB);
    pop!short(input).shouldEqual(-5);
-} unittest {
+}
+
+unittest {
    ushort[] shortBuffer = [0x645A];
    shortBuffer.length.shouldEqual(1);
    shortBuffer.pop!float().shouldThrow!Exception;
@@ -326,22 +329,24 @@ unittest {
  *  wantSigned = Get signed value
  *  input = The input range of DM to convert
  */
-private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInputRange!R)
-      && is(ElementType!R : const ushort)) {
+private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInputRange!R) && is(ElementType!R : const ushort)) {
    import std.traits : Signed;
+
    alias T = IntegerLargerThan!(numDM);
    T result = 0;
 
    foreach (i; 0 .. numDM) {
-      result |= ( cast(T)(popDM(input)) << (16 * i) );
+      result |= (cast(T)(popDM(input)) << (16 * i));
    }
 
    static if (wantSigned) {
       return cast(Signed!T)result;
-   }  else {
+   } else {
       return result;
    }
-} unittest {
+}
+
+unittest {
    ushort[] input = [0x00, 0x01, 0x02, 0x03];
    popInteger!(ushort[], 2, false)(input).shouldEqual(0x10000);
    popInteger!(ushort[], 2, false)(input).shouldEqual(0x30002);
@@ -350,8 +355,7 @@ private auto popInteger(R, int numDM, bool wantSigned)(ref R input) if ((isInput
    popInteger!(ushort[], 3, false)(input).shouldEqual(0x300020001);
 
    input = [0x01, 0x02];
-   popInteger!(ushort[], 3, false)(input)
-      .shouldThrow!Exception;
+   popInteger!(ushort[], 3, false)(input).shouldThrow!Exception;
 
    input = [0x00, 0x8000];
    popInteger!(ushort[], 2, false)(input).shouldEqual(0x8000_0000);
@@ -406,6 +410,7 @@ private ushort popDM(R)(ref R input) if ((isInputRange!R) && is(ElementType!R : 
  */
 void write(T, R)(ref R output, T n) if (isOutputRange!(R, ushort)) {
    import std.traits : isIntegral;
+
    static if (isIntegral!T) {
       writeInteger!(R, T.sizeof / 2)(output, n);
    } else static if (is(T == float)) {
@@ -426,9 +431,7 @@ unittest {
 
    app.write!double(2.0);
 
-   ushort[] expected = [
-      0, 0x3f80,
-      0, 0, 0, 0x4000];
+   ushort[] expected = [0, 0x3f80, 0, 0, 0, 0x4000];
    app.data.shouldEqual(expected);
 }
 
@@ -451,6 +454,7 @@ unittest {
 
 private void writeInteger(R, int numDM)(ref R output, IntegerLargerThan!numDM n) if (isOutputRange!(R, ushort)) {
    import std.traits : Unsigned;
+
    alias T = IntegerLargerThan!numDM;
    auto u = cast(Unsigned!T)n;
    foreach (i; 0 .. numDM) {
@@ -463,7 +467,9 @@ private float uint2float(uint x) pure nothrow {
    float_uint fi;
    fi.i = x;
    return fi.f;
-} unittest {
+}
+
+unittest {
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    uint2float(0x24369620).shouldEqual(3.959212E-17F);
    uint2float(0x3F000000).shouldEqual(0.5F);
@@ -479,7 +485,9 @@ private uint float2uint(float x) pure nothrow {
    float_uint fi;
    fi.f = x;
    return fi.i;
-} unittest {
+}
+
+unittest {
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    float2uint(3.959212E-17F).shouldEqual(0x24369620);
    float2uint(.5F).shouldEqual(0x3F000000);
@@ -501,7 +509,9 @@ double ulong2double(ulong x) pure nothrow {
    double_ulong fi;
    fi.i = x;
    return fi.f;
-} unittest {
+}
+
+unittest {
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    ulong2double(0x0).shouldEqual(0);
    ulong2double(0x3fe0000000000000).shouldEqual(0.5);
@@ -512,7 +522,9 @@ private ulong double2ulong(double x) pure nothrow {
    double_ulong fi;
    fi.f = x;
    return fi.i;
-} unittest {
+}
+
+unittest {
    // see http://gregstoll.dyndns.org/~gregstoll/floattohex/
    double2ulong(0).shouldEqual(0);
    double2ulong(0.5).shouldEqual(0x3fe0000000000000);

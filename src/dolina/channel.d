@@ -8,6 +8,7 @@ module dolina.channel;
 
 import std.exception;
 import serial.device;
+
 /**
  * Defines a basic HostLink channel
  */
@@ -30,7 +31,7 @@ interface IHostLinkChannel {
 /**
  * Channel based on serial RS232 communication
  */
-class HostLinkChannel: IHostLinkChannel {
+class HostLinkChannel : IHostLinkChannel {
    private SerialPort serialPort;
    this(SerialPort serialPort) {
       enforce(serialPort !is null);
@@ -39,12 +40,13 @@ class HostLinkChannel: IHostLinkChannel {
 
    string read() {
       enum START = 0x40; // @
-      enum END = 0x0D;  // CR
+      enum END = 0x0D; // CR
       bool inside;
 
       ubyte[1] buffer;
       ubyte[] reply;
       ubyte b;
+      // dfmt off
       do {
          immutable(size_t) length = serialPort.read(buffer);
          if (length > 0) {
@@ -58,6 +60,7 @@ class HostLinkChannel: IHostLinkChannel {
          }
 
       } while (b != END);
+      // dfmt on
       return cast(string)(reply).idup;
    }
 
@@ -68,9 +71,9 @@ class HostLinkChannel: IHostLinkChannel {
 
 // https://forum.dlang.org/thread/kpvypzrhwbeizzkkamkc@forum.dlang.org
 //if ( __traits(hasMember, S, "read"))
-class HLChannel(S=SerialPort): IHostLinkChannel {
-   static assert( __traits(hasMember, S, "read"));
-   static assert( __traits(hasMember, S, "write"));
+class HLChannel(S = SerialPort) : IHostLinkChannel {
+   static assert(__traits(hasMember, S, "read"));
+   static assert(__traits(hasMember, S, "write"));
 
    private S serialPort;
    this(S serialPort) {
@@ -80,12 +83,13 @@ class HLChannel(S=SerialPort): IHostLinkChannel {
 
    string read() {
       enum START = 0x40; // @
-      enum END = 0x0D;  // CR
+      enum END = 0x0D; // CR
       bool inside;
 
       ubyte[1] buffer;
       ubyte[] reply;
       ubyte b;
+      // dfmt off
       do {
          immutable(size_t) length = serialPort.read(buffer);
          if (length > 0) {
@@ -97,8 +101,8 @@ class HLChannel(S=SerialPort): IHostLinkChannel {
                reply ~= b;
             }
          }
-
       } while (b != END);
+      // dfmt on
       return cast(string)(reply).idup;
    }
 
@@ -113,10 +117,12 @@ unittest {
       void write(const(void[]) arr) {
          writeDone = true;
       }
+
       size_t read(void[] arr) {
          return 3;
       }
    }
+
    auto serial = new SerialMockW();
 
    IHostLinkChannel chan = new HLChannel!SerialMockW(serial);
@@ -124,9 +130,11 @@ unittest {
    chan.write("a");
    assert(serial.writeDone);
 }
+
 unittest {
    class SerialMockR {
-      void write(const(void[]) arr) {}
+      void write(const(void[]) arr) {
+      }
 
       private ubyte[] buf = [0x39, 0x40, 0x41, 0x0D, 0x43, 0x44];
       private size_t ptr;
